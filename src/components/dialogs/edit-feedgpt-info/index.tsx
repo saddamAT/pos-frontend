@@ -14,25 +14,22 @@ import Typography from '@mui/material/Typography'
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import toast, { Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
-import { BusinessType } from '@/types/apps/businessTypes'
+import toast from 'react-hot-toast'
 import { getAllBusiness } from '@/api/business'
 import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
 import { updateFeedToGPT } from '@/api/feedToChatGPT'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
+import { BusinessType } from '@/api/interface/businessInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditFeedGptInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: FeedToChatGptType
   onTypeAdded?: any
+  mode?: string
 }
 
-const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoProps) => {
-  const router = useRouter()
-  const { lang: locale } = useParams()
+const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditFeedGptInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const {
     register,
@@ -40,9 +37,9 @@ const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoPr
     formState: { errors }
   } = useForm<FeedToChatGptType>()
 
-  // States
-  const [feedToGptData, setFeedToGptData] = useState<EditFeedGptInfoProps['data'] | null>(data || null)
   const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<FeedToChatGptType | null>(null)
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -63,37 +60,37 @@ const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoPr
     setOpen(false)
   }
 
+  const handleConfirm = async () => {
+    if (!payloadData) return
+    try {
+      setLoading(true)
+      await updateFeedToGPT(payloadData.id, payloadData)
+      toast.success('Feed To Chat Gpt Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail)
+      } else if (error?.data?.business) {
+        toast.error(error?.data?.business[0])
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0])
+      } else {
+        toast.error('Error In Updating Feed To Chat Gpt')
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
+  }
+
   const onSubmit = (data1: FeedToChatGptType, e: any) => {
     e.preventDefault()
-    const id: number = data?.id ?? 0
-    updateFeedToGPT(id, data1)
-      .then(res => {
-        toast.success('Feed To Chat Gpt Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        if (error?.data?.business) {
-          toast.error(error?.data?.business[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else if (error?.data?.active) {
-          toast.error(error?.data?.active[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else {
-          toast.error('Error In Updating Feed To Chat Gpt', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
   }
 
   return (
@@ -115,9 +112,12 @@ const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoPr
                 select
                 fullWidth
                 id='business'
-                label='Select Business'
+                label='Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
@@ -154,12 +154,10 @@ const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoPr
               <CustomTextField
                 fullWidth
                 label='Document File'
-                // {...register('website_url', { required: 'website_url is required' })}
                 defaultValue={data?.file || ''}
                 inputProps={{
                   placeholder: 'business_doc',
-                  readOnly: true // Set the field as read-only
-                  // ...register('business_doc')
+                  readOnly: true
                 }}
               />
             </Grid>
@@ -219,7 +217,15 @@ const EditFeedGptInfo = ({ open, setOpen, data, onTypeAdded }: EditFeedGptInfoPr
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Feed Gpt'
+          description='Are you sure you want to edit this  Feed Gpt?'
+        />
+      )}
     </Dialog>
   )
 }

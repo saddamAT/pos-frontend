@@ -32,12 +32,22 @@ const Pricing = ({ data }: PricingProps) => {
   return (
     <div className='flex flex-col gap-6' style={{ padding: '10px' }}>
       <div className='flex flex-col justify-center items-center gap-2'>
-        <Typography variant='h3'>Pricing Plans</Typography>
-
-        <Typography>
+        {/* <div className='flex justify-center items-center gap-2'>
+          <Typography variant='h3'>Pricing Plans</Typography>
           <Button variant='contained' color='primary' onClick={handleBackToHome} style={{ marginRight: '10px' }}>
             Back To Home
           </Button>
+        </div> */}
+        <div className='flex justify-between items-center w-full'>
+          <Typography variant='h3' className='mx-auto'>
+            Pricing Plans
+          </Typography>
+          <Button variant='contained' color='primary' onClick={handleBackToHome} style={{ marginRight: '10px' }}>
+            Back To Home
+          </Button>
+        </div>
+
+        <Typography>
           All plans include 40+ advanced tools and features to boost your product. Choose the best plan to fit your
           needs.
         </Typography>

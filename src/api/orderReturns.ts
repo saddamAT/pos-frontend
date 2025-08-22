@@ -1,20 +1,39 @@
 import { ENDPOINTS } from './vars/vars'
 import { GET, POST, GETBYID, PATCH, DELETE } from './api'
 import { OrderReturnDataType } from './interface/orderReturnInterface'
+import { apiRequest } from '@/utils/apiRequest'
 
-export async function getAllOrderReturns(): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.returnOrders}/`
-    const response = await GET(url)
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching Order Retruns data')
-    }
-  }
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
 }
+
+const getReturnOrdersBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+
+  return `${apiUrl}/whatseat/${ENDPOINTS.returnOrders}`
+}
+
+export async function getAllOrderReturns(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getReturnOrdersBaseUrl()}/`)
+}
+
+// export async function getAllOrderReturns(): Promise<any> {
+//   try {
+//     const url = `whatseat/${ENDPOINTS.returnOrders}/`
+//     const response = await GET(url)
+//     return response
+//   } catch (error: any) {
+//     if (error.response) {
+//       throw error.response
+//     } else {
+//       throw new Error('Error in fetching Order Retruns data')
+//     }
+//   }
+// }
 
 export async function createOrderReturns(data: any): Promise<any> {
   try {

@@ -1,7 +1,7 @@
 export function getBaseUrl(): string {
-  // const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/'
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_URL || 'https://mask-toolbots-fjb0fbbteaf4dcdw.westeurope-01.azurewebsites.net/api/'
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/api/'
+  // const baseUrl =
+  //   process.env.NEXT_PUBLIC_API_URL || 'https://mask-toolbots-fjb0fbbteaf4dcdw.westeurope-01.azurewebsites.net/api/'
 
   return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
 }
@@ -23,6 +23,7 @@ export const ENDPOINTS = {
   resetPassword: 'reset-password',
   updatePassword: 'update-password',
   userTypes: 'user-types',
+  userType: 'user-type',
   syncMenuMeta: 'save-changes',
   whatsapp: 'whatsapp',
   feedToChatGPT: 'feed-to-gpt',
@@ -47,5 +48,6 @@ export const ENDPOINTS = {
   createTemplate: 'create-template',
   facebookTemplates: 'facebook-templates/by-business',
   facebookFlows: 'facebook-flows/by-business',
+  userBusinessById: 'whatseat/business/user',
   currencies: 'currencies'
 }

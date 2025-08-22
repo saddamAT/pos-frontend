@@ -1,17 +1,17 @@
 // MUI Imports
 'use client'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
-
-// Type Imports
-import type { ThemeColor } from '@core/types'
 
 import { useEffect, useState } from 'react'
-
+import Grid from '@mui/material/Grid'
+import { useParams, useRouter } from 'next/navigation'
+import CustomTextField from '@core/components/mui/TextField'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { Locale } from '@/configs/i18n'
 import { getFaceBookById } from '@/api/facebook'
 import { FaceBookDataType } from '@/api/interface/facebookInterface'
+import Loader from '@/components/loader/Loader'
+import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewFaceBookProps = {
   id: string
@@ -20,19 +20,27 @@ type PreviewFaceBookProps = {
 // MenuDataType
 const FaceBookDetails = ({ id }: PreviewFaceBookProps) => {
   const [faceBookItemData, setFaceBookItemData] = useState<FaceBookDataType | null>(null)
-  // Vars
+  const [loading, setLoading] = useState<boolean>(false)
+  const { lang: locale } = useParams() as { lang: Locale }
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
+
+  const handleClose = () => {
+    setOpen(false)
+    router.push(getLocalizedUrl('/platforms', locale as Locale))
+  }
 
   useEffect(() => {
     const fetchFaceBookData = async () => {
+      setLoading(true)
       try {
         const response = await getFaceBookById(Number(id))
-        // console.log(response?.data, 'response Of Single Whats App------')
+        setLoading(false)
         setFaceBookItemData(response?.data)
-
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
       } catch (error: any) {
         // Handle error
+      } finally {
+        setLoading(false)
       }
     }
     fetchFaceBookData()
@@ -40,62 +48,77 @@ const FaceBookDetails = ({ id }: PreviewFaceBookProps) => {
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div>
-            <Typography variant='h5'>FaceBook Details</Typography>
-            <Divider className='mlb-4' />
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business
-                </Typography>
-                <Typography>{faceBookItemData && faceBookItemData.business}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  FaceBook Id
-                </Typography>
-                <Typography>{faceBookItemData && faceBookItemData.facebook_id}</Typography>
-              </div>
+      <Dialog open={open} scroll='body' onClose={handleClose} sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+        <DialogCloseButton onClick={handleClose} disableRipple>
+          <i className='tabler-x' />
+        </DialogCloseButton>
+        <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-11 sm:pbe-4 sm:pli-11'>
+          FaceBook Details
+        </DialogTitle>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Access Token
-                </Typography>
-                <Typography>{faceBookItemData && faceBookItemData.access_token}</Typography>
-              </div>
+        <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          <Grid container spacing={5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData?.business}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Facebook ID'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData?.facebook_id}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Access Token'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData?.access_token}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Status'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData.active ? 'active' : ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Web Hook Token'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData?.webhook_token}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Catalog ID'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData?.catalog_id}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Status
-                </Typography>
-                <Typography color='text.primary'>
-                  {faceBookItemData && faceBookItemData.active ? 'active' : ''}
-                </Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Web Hook Token
-                </Typography>
-                <Typography color='text.primary'>{faceBookItemData && faceBookItemData.webhook_token}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  FaceBook Account Id
-                </Typography>
-                <Typography color='text.primary'>{faceBookItemData && faceBookItemData.facebook_account_id}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Catalog Id
-                </Typography>
-                <Typography color='text.primary'>{faceBookItemData && faceBookItemData.catalog_id}</Typography>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Status'
+                fullWidth
+                defaultValue={faceBookItemData && faceBookItemData.active ? 'active' : ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
+      {loading && <Loader />}
     </>
   )
 }

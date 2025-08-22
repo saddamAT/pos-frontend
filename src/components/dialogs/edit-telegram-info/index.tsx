@@ -11,92 +11,84 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import { TelegramDataType } from '@/api/interface/telegramInterface'
 import { updateTelegram } from '@/api/telegram'
-import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
+import { FeedToChatGptFileType, FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
 import { getFeedToChatGpt } from '@/api/feedToChatGPT'
-import { BusinessType } from '@/types/apps/businessTypes'
 import { getAllBusiness } from '@/api/business'
+import { BusinessType } from '@/api/interface/businessInterface'
+import ConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditTelegramInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: TelegramDataType
   onTypeAdded?: any
+  mode?: string
+  businesses: BusinessType[]
+  feedToChatGpt: FeedToChatGptFileType[]
 }
 
-const EditTelegramInfo = ({ open, setOpen, data, onTypeAdded }: EditTelegramInfoProps) => {
+const EditTelegramInfo = ({
+  open,
+  setOpen,
+  data,
+  onTypeAdded,
+  mode,
+  businesses,
+  feedToChatGpt
+}: EditTelegramInfoProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors }
   } = useForm<TelegramDataType>()
 
-  const [feedToGptData, setFeedToGptData] = useState<FeedToChatGptType[]>([])
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<TelegramDataType | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
 
   const handleClose = () => {
     setOpen(false)
   }
 
-  useEffect(() => {
-    const fetchFeedToChatGpt = async () => {
-      try {
-        const response = await getFeedToChatGpt()
-        setFeedToGptData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchFeedToChatGpt()
-  }, [])
-
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
-
   const onSubmit = (data1: TelegramDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateTelegram(id, data1)
-      .then(res => {
-        toast.success('Telegram Data Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        console.log(error, 'error telegram Update api')
-      })
-      .finally(() => {
-        // setLoading(false)
-      })
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+  const handleConfirm = async () => {
+    if (!payloadData) return
+
+    try {
+      setLoading(true)
+      await updateTelegram(payloadData.id, payloadData)
+      toast.success('Telegram Data Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      // console.log(error, 'error')
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail)
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0])
+      } else {
+        toast.error('Error In Updating Telegram')
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
@@ -114,14 +106,17 @@ const EditTelegramInfo = ({ open, setOpen, data, onTypeAdded }: EditTelegramInfo
                 select
                 fullWidth
                 id='business'
-                label='Select Business'
+                label='Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+                {businesses &&
+                  businesses?.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
@@ -155,14 +150,14 @@ const EditTelegramInfo = ({ open, setOpen, data, onTypeAdded }: EditTelegramInfo
                 select
                 fullWidth
                 id='Feed to gpt'
-                label='Select feed to gpt'
+                label='Feed to gpt'
                 defaultValue={data?.feed_to_gpt || ''}
                 inputProps={{ placeholder: 'feed_to_gpt', ...register('feed_to_gpt') }}
                 error={!!errors.feed_to_gpt}
                 helperText={errors.feed_to_gpt?.message}
               >
-                {feedToGptData &&
-                  feedToGptData?.map(feed => (
+                {feedToChatGpt &&
+                  feedToChatGpt?.map(feed => (
                     <MenuItem key={feed.id} value={feed.id}>
                       {feed.name}
                     </MenuItem>
@@ -198,7 +193,15 @@ const EditTelegramInfo = ({ open, setOpen, data, onTypeAdded }: EditTelegramInfo
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <ConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Telegram'
+          description='Are you sure you want to edit this Telegram?'
+        />
+      )}
     </Dialog>
   )
 }

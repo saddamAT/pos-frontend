@@ -18,19 +18,22 @@ import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import { WhatsAppDataType } from '@/api/interface/whatsappInterface'
 import { updateWhatsApp } from '@/api/whatsapp'
-import toast, { Toaster } from 'react-hot-toast'
-import { BusinessType } from '@/types/apps/businessTypes'
+import toast from 'react-hot-toast'
 import { getAllBusiness } from '@/api/business'
+import { BusinessType } from '@/api/interface/businessInterface'
+import ConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditWhatsAppInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: WhatsAppDataType
   onTypeAdded?: any
+  mode?: string
 }
 
-const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfoProps) => {
+const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditWhatsAppInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
+  const [openConfirmation, setOpenConfirmation] = useState(false)
   const {
     register,
     handleSubmit,
@@ -38,6 +41,7 @@ const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfo
   } = useForm<WhatsAppDataType>()
 
   const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+  const [payloadData, setPayloadData] = useState<WhatsAppDataType | null>(null)
 
   useEffect(() => {
     const fetchBusiness = async () => {
@@ -47,7 +51,7 @@ const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfo
       } catch (err: any) {
         // setError(err.message || 'Failed to fetch business')
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
 
@@ -61,35 +65,44 @@ const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfo
   const onSubmit = (data1: WhatsAppDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateWhatsApp(id, data1)
-      .then(res => {
-        toast.success('Whats App Feed Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!payloadData) return
+
+    try {
+      setLoading(true)
+      await updateWhatsApp(payloadData.id, payloadData)
+      toast.success('Whats App Feed Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      console.log(error, 'error')
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail, {
+          duration: 5000
         })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        if (error?.data?.business) {
-          toast.error(error?.data?.business[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else if (error?.data?.active) {
-          toast.error(error?.data?.active[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else {
-          toast.error('Error In Updating WhatsApp Feed', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+      } else if (error?.data?.business) {
+        toast.error(error?.data?.business[0], {
+          duration: 5000
+        })
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0], {
+          duration: 5000
+        })
+      } else {
+        toast.error('Error In Updating WhatsApp Feed', {
+          duration: 5000
+        })
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
@@ -113,7 +126,10 @@ const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfo
                 id='business'
                 label='Select Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
@@ -204,7 +220,15 @@ const EditWhatsAppInfo = ({ open, setOpen, data, onTypeAdded }: EditWhatsAppInfo
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <ConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit WhatsApp Feed'
+          description='Are you sure you want to edit this  WhatsApp Feed?'
+        />
+      )}
     </Dialog>
   )
 }

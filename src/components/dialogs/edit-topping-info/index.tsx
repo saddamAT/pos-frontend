@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -16,23 +16,20 @@ import Typography from '@mui/material/Typography'
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-
-import toast, { Toaster } from 'react-hot-toast'
-
-import { getAllBusiness } from '@/api/business'
-import { BusinessType } from '@/types/apps/businessTypes'
-
+import toast from 'react-hot-toast'
 import { updateTopping } from '@/api/toppings'
 import { ToppingDataType, ToppingDataTypeWithObjects } from '@/api/interface/toppingInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditToppingInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: ToppingDataTypeWithObjects
   onTypeAdded?: any
+  mode?: string
 }
 
-const EditToppingInfo = ({ open, setOpen, data, onTypeAdded }: EditToppingInfoProps) => {
+const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditToppingInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
 
   const {
@@ -41,7 +38,8 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded }: EditToppingInfoPr
     formState: { errors }
   } = useForm<ToppingDataType>()
 
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<ToppingDataType | null>(null)
 
   const handleClose = () => {
     setOpen(false)
@@ -50,42 +48,42 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded }: EditToppingInfoPr
   const onSubmit = (data1: ToppingDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateTopping(id, data1)
-      .then(res => {
-        toast.success('Topping Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        console.log(error, 'error Topping Update api')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    if (mode === 'edit') {
+      setPayloadData({ ...data1, id: data1?.business ?? 0 })
+      setOpenConfirmation(true)
+    }
   }
 
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
+  const handleConfirm = async () => {
+    if (!payloadData) return
 
-    fetchBusiness()
-  }, [])
+    const id = data?.id ?? 0
+    setLoading(true)
+
+    try {
+      await updateTopping(id, payloadData)
+
+      toast.success('Topping updated successfully', {
+        duration: 5000
+      })
+
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error) {
+      console.error('Error updating topping:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog
+      fullWidth
+      open={open}
+      // maxWidth='md'
+      scroll='body'
+      sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
+    >
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
@@ -174,7 +172,15 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded }: EditToppingInfoPr
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Topping'
+          description='Are you sure you want to edit this Topping?'
+        />
+      )}
     </Dialog>
   )
 }

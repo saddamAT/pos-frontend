@@ -21,84 +21,83 @@ import CustomTextField from '@core/components/mui/TextField'
 
 import { FaceBookDataType } from '@/api/interface/facebookInterface'
 import { updateFaceBook } from '@/api/facebook'
-import { useParams, useRouter } from 'next/navigation'
-import toast, { Toaster } from 'react-hot-toast'
+
+import toast from 'react-hot-toast'
 import { getAllBusiness } from '@/api/business'
-import { BusinessType } from '@/types/apps/businessTypes'
+import { BusinessType } from '@/api/interface/businessInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
+import { FeedToChatGptFileType } from '@/api/interface/interfaceFeedToGPT'
 
 type EditFaceBookInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: FaceBookDataType
   onTypeAdded?: any
+  mode?: string
+  businesses: BusinessType[]
+  feedToChatGpt: FeedToChatGptFileType[]
 }
 
-const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfoProps) => {
+const EditFaceBookInfo = ({
+  open,
+  setOpen,
+  data,
+  onTypeAdded,
+  mode,
+  businesses,
+  feedToChatGpt
+}: EditFaceBookInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const router = useRouter()
-  const { lang: locale } = useParams()
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<FaceBookDataType | null>(null)
+
   const {
     register,
     handleSubmit,
     formState: { errors }
   } = useForm<FaceBookDataType>()
 
-  // States
-  const [whatsAppData, setWhatsAppData] = useState<EditFaceBookInfoProps['data'] | null>(data || null)
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
-
   const handleClose = () => {
     setOpen(false)
   }
 
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
-
   const onSubmit = (data1: FaceBookDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateFaceBook(id, data1)
-      .then(res => {
-        toast.success('Facebook Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!payloadData) return
+    try {
+      setLoading(true)
+      await updateFaceBook(payloadData.id, payloadData)
+      toast.success('Facebook Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      // console.log(error, 'error------')
+
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail, {
+          duration: 5000
         })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        console.log(error, 'error Facebook Update api')
-        if (error?.data?.business) {
-          toast.error(error?.data?.business[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else if (error?.data?.active) {
-          toast.error(error?.data?.active[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else {
-          toast.error('Error In Updating Facebook Feed', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0], {
+          duration: 5000
+        })
+      } else {
+        toast.error('Error In Updating Facebook Feed', {
+          duration: 5000
+        })
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
@@ -107,9 +106,9 @@ const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfo
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Edit faceBook Information
+        Edit facebook Information
         <Typography component='span' className='flex flex-col text-center'>
-          Updating faceBook details will receive a privacy audit.
+          Updating facebook details will receive a privacy audit.
         </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -120,14 +119,17 @@ const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfo
                 select
                 fullWidth
                 id='business'
-                label='Select Business'
+                label='Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+                {businesses &&
+                  businesses?.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
@@ -168,14 +170,22 @@ const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfo
             </Grid>
             <Grid item xs={12} sm={6}>
               <CustomTextField
+                select
                 fullWidth
+                id='feed_to_gpt'
                 label='Feed to gpt'
-                {...register('feed_to_gpt', { required: 'Feed to gpt is required' })}
                 defaultValue={data?.feed_to_gpt || ''}
-                {...register('feed_to_gpt', {
-                  required: 'Feed to gpt is required'
-                })}
-              />
+                inputProps={{ placeholder: 'feed to gpt', ...register('feed_to_gpt') }}
+                error={!!errors.feed_to_gpt}
+                helperText={errors.feed_to_gpt?.message}
+              >
+                {feedToChatGpt &&
+                  feedToChatGpt?.map(feed => (
+                    <MenuItem key={feed.id} value={feed.id}>
+                      {feed.name}
+                    </MenuItem>
+                  ))}
+              </CustomTextField>
             </Grid>
 
             <Grid item xs={12} sm={6}>
@@ -211,7 +221,7 @@ const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfo
                 helperText={errors.active?.message}
               >
                 <MenuItem value='' disabled>
-                  Select Status
+                  Status
                 </MenuItem>
                 <MenuItem value='true'>Active</MenuItem>
                 <MenuItem value='false'>Inactive</MenuItem>
@@ -228,7 +238,15 @@ const EditFaceBookInfo = ({ open, setOpen, data, onTypeAdded }: EditFaceBookInfo
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Facebook'
+          description='Are you sure you want to edit this Facebook?'
+        />
+      )}
     </Dialog>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -18,22 +18,33 @@ import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import { InstagramDataType } from '@/api/interface/instagramInterface'
 import { updateInstagram } from '@/api/instagram'
-import toast, { Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
-import { BusinessType } from '@/types/apps/businessTypes'
-import { getAllBusiness } from '@/api/business'
-import { getFeedToChatGpt } from '@/api/feedToChatGPT'
-import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
+import toast from 'react-hot-toast'
+import { FeedToChatGptFileType, FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
+import { BusinessType } from '@/api/interface/businessInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditInstagramInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: InstagramDataType
   onTypeAdded?: any
+  mode?: string
+  businesses: BusinessType[]
+  feedToChatGpt: FeedToChatGptFileType[]
 }
 
-const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramInfoProps) => {
+const EditInstagramInfo = ({
+  open,
+  setOpen,
+  data,
+  onTypeAdded,
+  mode,
+  businesses,
+  feedToChatGpt
+}: EditInstagramInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<InstagramDataType | null>(null)
 
   const {
     register,
@@ -41,80 +52,50 @@ const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramIn
     formState: { errors }
   } = useForm<InstagramDataType>()
 
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
-  const [feedToGptData, setFeedToGptData] = useState<FeedToChatGptType[]>([])
   const handleClose = () => {
     setOpen(false)
   }
 
-  useEffect(() => {
-    const fetchFeedToChatGpt = async () => {
-      try {
-        const response = await getFeedToChatGpt()
-
-        setFeedToGptData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchFeedToChatGpt()
-  }, [])
-
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
-
   const onSubmit = (data1: InstagramDataType, e: any) => {
+    console.log(data1, 'data1')
+
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateInstagram(id, data1)
-      .then(res => {
-        toast.success('Instagram Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        console.log(error, 'error Instagram Update api')
-        if (error?.data?.business) {
-          toast.error(error?.data?.business[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else if (error?.data?.active) {
-          toast.error(error?.data?.active[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else {
-          toast.error('Error In Updating Instagram Feed', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!payloadData) return
+
+    try {
+      setLoading(true)
+      await updateInstagram(payloadData.id, payloadData)
+      toast.success('Instagram Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      // console.log(error, 'error')
+
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail)
+      } else if (error?.data?.business) {
+        toast.error(error?.data?.business[0])
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0])
+      } else {
+        toast.error('Error In Updating Instagram Feed')
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
@@ -132,14 +113,18 @@ const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramIn
                 select
                 fullWidth
                 id='business'
-                label='Select Business'
+                label='Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                // inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+                {businesses &&
+                  businesses?.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
@@ -183,14 +168,14 @@ const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramIn
                 select
                 fullWidth
                 id='feed_to_gpt'
-                label='Select feed to gpt'
+                label='Feed to gpt'
                 defaultValue={data?.feed_to_gpt || ''}
                 inputProps={{ placeholder: 'feed to gpt', ...register('feed_to_gpt') }}
                 error={!!errors.feed_to_gpt}
                 helperText={errors.feed_to_gpt?.message}
               >
-                {feedToGptData &&
-                  feedToGptData?.map(feed => (
+                {feedToChatGpt &&
+                  feedToChatGpt?.map(feed => (
                     <MenuItem key={feed.id} value={feed.id}>
                       {feed.name}
                     </MenuItem>
@@ -209,7 +194,7 @@ const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramIn
                 helperText={errors.active?.message}
               >
                 <MenuItem value='' disabled>
-                  Select Status
+                  Status
                 </MenuItem>
                 <MenuItem value='true'>Active</MenuItem>
                 <MenuItem value='false'>Inactive</MenuItem>
@@ -226,7 +211,15 @@ const EditInstagramInfo = ({ open, setOpen, data, onTypeAdded }: EditInstagramIn
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Instagram'
+          description='Are you sure you want to edit this Instagram?'
+        />
+      )}
     </Dialog>
   )
 }

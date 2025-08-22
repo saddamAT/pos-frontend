@@ -5,21 +5,23 @@ import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Button from '@mui/material/Button'
+import Grid from '@mui/material/Grid'
 
 import Typography from '@mui/material/Typography'
 import MenuItem from '@mui/material/MenuItem'
 import CustomTextField from '@core/components/mui/TextField'
 import { SxProps, Theme } from '@mui/material/styles'
-import { BusinessType } from '@/types/apps/businessTypes'
+
 import { getAllBusiness } from '@/api/business'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { createTemplate, createFlow } from '@/api/menu'
 
 import { getFaceBookFlowsByBusinessId, getFaceBookTemplatesByBusinessId } from '@/api/templates'
-import { FaceBookFlowDataType, FaceBookTemplateDataType } from '@/api/interface/templateInterface'
+import { FaceBookTemplateDataType } from '@/api/interface/templateInterface'
 import { useParams } from 'next/navigation'
 import { getWhatsAppQRByContact } from '@/api/whatsapp'
-import { useSearchParams } from 'next/navigation' // Add this import
+
+import { BusinessType } from '@/api/interface/businessInterface'
 
 interface ActionCardProps {
   title: string
@@ -104,7 +106,6 @@ const ActionCard: React.FC<ActionCardProps> = ({
     <Button
       variant='contained'
       type='submit'
-      // onClick={() => onClick(businessId)}
       onClick={() => onClick(businessId, contact_number)}
       disabled={isDisabled}
       sx={styles.button}
@@ -117,14 +118,10 @@ const ActionCard: React.FC<ActionCardProps> = ({
   </div>
 )
 
-const EarningReports: React.FC = () => {
+const TemplateActionsComp: React.FC = () => {
   const params = useParams()
-  const searchParams = useSearchParams() // Add this
-  // console.log(searchParams, 'searchParams')
-  // console.log(params, 'params')
 
   const languageCode = params?.lang || 'en'
-
   const [data, setData] = useState<BusinessType[]>([])
   const [selectedBusinessData, setSelectedBusinessData] = useState<SelectedBusiness | null>(null)
   const [hasAddressFlow, setHasAddressFlow] = useState<boolean>(false)
@@ -133,10 +130,7 @@ const EarningReports: React.FC = () => {
   const [hasWelcomeTemplate, setHasWelcomeTemplate] = useState<boolean>(false)
   const [hasPendingOrderTemplate, setHasPendingOrderTemplate] = useState<boolean>(false)
   const [hasDeliveryOrPickupTemplate, setHasDeliveryOrPickupTemplate] = useState<boolean>(false)
-  const [hasPrivacyPolicyTemplate, setHasPrivacyPolicyTemplate] = useState<boolean>(false)
-  // const [isLoading, setIsLoading] = useState<boolean>(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
-  const [toastShown, setToastShown] = useState(false)
   const [isLoad, setIsLoad] = useState<boolean>(false)
 
   const fetchBusiness = async () => {
@@ -483,53 +477,6 @@ const EarningReports: React.FC = () => {
       .finally(() => {})
   }
 
-  //   const handlePrivacyTemplateClick = (businessId: number): void => {
-  //     const payload = {
-  //       // name: 'privacy_template',
-  //       name: `privacy_template_${languageCode}`,
-  //       category: 'MARKETING',
-  //       allow_category_change: true,
-  //       language: 'en',
-
-  //       components: [
-  //         // {
-  //         //   type: 'HEADER',
-  //         //   format: 'TEXT',
-  //         //   text: 'Unprocessed order from your last visit'
-  //         // },
-  //         {
-  //           type: 'BODY',
-  //           text: 'Ensure your data is protected with our secure and transparent privacy practices.'
-  //         },
-  //         // {
-  //         //   type: 'FOOTER',
-  //         //   text: 'Tap an option below to proceed.'
-  //         // },
-  //         {
-  //           type: 'BUTTONS',
-  //           buttons: [
-  //             {
-  //               type: 'URL',
-  //               text: 'Learn More',
-  //               url: 'https://www.google.com/'
-  //             }
-  //           ]
-  //         }
-  //       ],
-
-  //       business_id: businessId
-  //     }
-  //     createTemplate(payload)
-  //       .then(res => {
-  //         toast.success('Privacy Template Created Successfully')
-  //       })
-  //       .catch(error => {
-  //         toast.dismiss()
-  //         toast.error(error?.data?.error)
-  //       })
-  //       .finally(() => {})
-  //   }
-
   const handleQRCodeClick = async (businessId: number, contact_number?: string): Promise<void> => {
     // console.log(contact_number, 'contact_number---------')
 
@@ -632,8 +579,8 @@ const EarningReports: React.FC = () => {
           ))}
         </CustomTextField>
       </div>
-      <CardContent>
-        <div style={styles.container}>
+      {/* <CardContent>
+        <div>
           {selectedBusinessData &&
             getActions(selectedBusinessData.id, selectedBusinessData.contact_number).map((action, index) => (
               <ActionCard
@@ -653,9 +600,49 @@ const EarningReports: React.FC = () => {
             <img src={qrCodeUrl} alt='WhatsApp QR Code' className='w-48 h-48 border p-2' />
           </div>
         )}
+      </CardContent> */}
+
+      <CardContent className='flex flex-col gap-6'>
+        {selectedBusinessData ? (
+          <Grid container spacing={6}>
+            {getActions(selectedBusinessData.id, selectedBusinessData.contact_number).map((action, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <div className='border rounded bs-full'>
+                  <div className='pli-2 pbs-2'>
+                    <img src='/images/academy/1.png' alt={action.title} className='is-full' />
+                  </div>
+                  <div className='flex flex-col gap-4 p-5'>
+                    <div className='flex flex-col gap-1'>
+                      <Typography variant='h5' className='hover:text-primary'>
+                        {action.title}
+                      </Typography>
+                      <Typography>{action.description}</Typography>
+                    </div>
+
+                    <Button
+                      variant='tonal'
+                      onClick={() => action.onClick(action.businessId, action.contact_number)}
+                      disabled={action.isDisabled}
+                      startIcon={<i className='tabler-rotate-clockwise-2' />}
+                    >
+                      {action.title}
+                    </Button>
+                  </div>
+                </div>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography className='text-center'>No template available</Typography>
+        )}
+        {qrCodeUrl && (
+          <div className='mt-4'>
+            <img src={qrCodeUrl} alt='WhatsApp QR Code' className='w-48 h-48 border p-2' />
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
 
-export default EarningReports
+export default TemplateActionsComp

@@ -12,27 +12,19 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
-import Typography from '@mui/material/Typography'
 
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 import { MenuDataType } from '@/api/interface/menuIterface'
-import toast, { Toaster } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-import OpenDialogOnElementClick from '../OpenDialogOnElementClick'
-import type { ButtonProps } from '@mui/material/Button'
-import type { ThemeColor } from '@core/types'
 import Loader from '@/components/loader/Loader'
-import type { User } from '@/api/interface/userInterface'
-import { createUser, getUserTypes } from '@/api/user'
-import { InputAdornment } from '@mui/material'
-import IconButton from '@mui/material/IconButton'
+
 import { getAllBusiness } from '@/api/business'
 import { ResturantDataType } from '@/api/interface/resturantInterface'
-import { BusinessType } from '@/types/apps/businessTypes'
 import { createResturant } from '@/api/resturant'
+import { BusinessType } from '@/api/interface/businessInterface'
 
 type AddOutletFormProps = {
   open: boolean
@@ -41,15 +33,7 @@ type AddOutletFormProps = {
   onTypeAdded?: any
 }
 
-const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
-  children,
-  color,
-  variant
-})
-
 const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
-  const router = useRouter()
-
   const [loading, setLoading] = useState<boolean>(false)
   const [businessData, setBusinessData] = useState<BusinessType[]>([])
 
@@ -57,8 +41,7 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
-    control
+    reset
   } = useForm<ResturantDataType>()
 
   // States
@@ -69,9 +52,8 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
 
     createResturant(data)
       .then(res => {
-        console.log(res, 'register restorant')
         toast.success('Outlet registerd successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
+          duration: 5000
         })
         if (onTypeAdded) {
           onTypeAdded()
@@ -83,7 +65,7 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
       .catch(error => {
         console.log(error, 'error in register resto')
         toast.error(error?.data?.detail, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
+          duration: 5000
         })
       })
       .finally(() => {
@@ -134,16 +116,22 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('name', { required: 'Name is required' })}
                   error={!!errors.name}
                   helperText={errors.name?.message}
+                  InputLabelProps={{
+                    className: errors.name && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Postal Code Delivery *'
+                  label='Postal Code*'
                   fullWidth
-                  placeholder='Enter Postalcode Delivery'
-                  {...register('postal_code_delivery', { required: 'Postal Code Delivery is required' })}
+                  placeholder='Enter Postalcode'
+                  {...register('postal_code_delivery', { required: 'Postal Code is required' })}
                   error={!!errors.postal_code_delivery}
                   helperText={errors.postal_code_delivery?.message}
+                  InputLabelProps={{
+                    className: errors.postal_code_delivery && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -154,6 +142,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('city', { required: 'city is required' })}
                   error={!!errors.city}
                   helperText={errors.city?.message}
+                  InputLabelProps={{
+                    className: errors.city && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -164,6 +155,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('cuisine_type', { required: 'Cuisine Type is required' })}
                   error={!!errors.cuisine_type}
                   helperText={errors.cuisine_type?.message}
+                  InputLabelProps={{
+                    className: errors.cuisine_type && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -175,6 +169,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('contact_number', { required: 'Contact number is required' })}
                   error={!!errors.contact_number}
                   helperText={errors.contact_number?.message}
+                  InputLabelProps={{
+                    className: errors.contact_number && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -185,6 +182,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('description', { required: 'Description is required' })}
                   error={!!errors.description}
                   helperText={errors.description?.message}
+                  InputLabelProps={{
+                    className: errors.description && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -195,6 +195,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   {...register('catalog_link', { required: 'Catalog Link is required' })}
                   error={!!errors.catalog_link}
                   helperText={errors.catalog_link?.message}
+                  InputLabelProps={{
+                    className: errors.catalog_link && 'requiredFieldError'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -202,8 +205,11 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
                   select
                   fullWidth
                   id='business'
-                  label='Select Business *'
-                  inputProps={{ placeholder: 'Select Business', ...register('business') }}
+                  label='Business *'
+                  {...register('business', { required: 'Business is required' })}
+                  InputLabelProps={{
+                    className: errors.business && 'requiredFieldError'
+                  }}
                   error={!!errors.business}
                   helperText={errors.business?.message}
                 >
@@ -228,8 +234,6 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
             {loading && <Loader />}
           </DialogContent>
         </form>
-
-        <Toaster />
       </div>
     </Dialog>
   )

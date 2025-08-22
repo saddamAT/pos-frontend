@@ -1,20 +1,39 @@
 import { DELETE, GET, GETBYID, PATCH, POST, POSTFILE } from './api'
 import { FeedToChatGptType } from './interface/interfaceFeedToGPT'
 import { ENDPOINTS } from './vars/vars'
+import { apiRequest } from '@/utils/apiRequest'
 
-export async function getFeedToChatGpt(): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.feedToChatGPT}/`
-    const response = await GET(url)
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching feedToChatGPT data')
-    }
-  }
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
 }
+
+const getFeedToChatGptBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+
+  return `${apiUrl}/whatseat/${ENDPOINTS.feedToChatGPT}`
+}
+
+export async function getFeedToChatGpt(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getFeedToChatGptBaseUrl()}/`)
+}
+
+// export async function getFeedToChatGpt(): Promise<any> {
+//   try {
+//     const url = `whatseat/${ENDPOINTS.feedToChatGPT}/`
+//     const response = await GET(url)
+//     return response
+//   } catch (error: any) {
+//     if (error.response) {
+//       throw error.response
+//     } else {
+//       throw new Error('Error in fetching feedToChatGPT data')
+//     }
+//   }
+// }
 
 export async function CreateFeedToGPT(data: FeedToChatGptType): Promise<any> {
   try {

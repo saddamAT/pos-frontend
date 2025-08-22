@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -12,108 +12,61 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
-import Typography from '@mui/material/Typography'
 
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import { MenuDataType } from '@/api/interface/menuIterface'
-import toast, { Toaster } from 'react-hot-toast'
-import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-import OpenDialogOnElementClick from '../OpenDialogOnElementClick'
-import type { ButtonProps } from '@mui/material/Button'
-import type { ThemeColor } from '@core/types'
 import Loader from '@/components/loader/Loader'
 import type { User } from '@/api/interface/userInterface'
-import { createUser, getUserTypes } from '@/api/user'
+import { createUser } from '@/api/user'
 import { InputAdornment } from '@mui/material'
 import IconButton from '@mui/material/IconButton'
 
-type AddtMenuFormProps = {
-  open: boolean
-  setOpen: (open: boolean) => void
-  data?: MenuDataType
-  onTypeAdded?: any
-}
-
 type AddUserFormProps = {
-  //   open: boolean
-  //   handleClose: () => void
   open: boolean
   setOpen: (open: boolean) => void
-  data?: MenuDataType
+  data?: UserType[]
   onTypeAdded?: any
 }
 
-const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
-  children,
-  color,
-  variant
-})
+interface UserType {
+  id: number | string
+  type: string
+  description: string
+  active: boolean
+}
 
-const AddUserForm = (
-  { open, setOpen, data, onTypeAdded }: AddUserFormProps
-  //   { open, handleClose }: Props
-) => {
-  const [formError, setFormError] = useState('')
-  const router = useRouter()
-
+const AddUser = ({ open, setOpen, data, onTypeAdded }: AddUserFormProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
-    control
+    reset
   } = useForm<User>()
 
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [loading, setLoading] = useState<boolean>(false)
-  const [userTypes, setUserTypes] = useState<UserRole[]>([])
-  const [addType, setAddType] = useState<boolean>(false)
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
-
-  useEffect(() => {
-    const fetchUserTypes = async () => {
-      setLoading(true)
-
-      try {
-        const response = await getUserTypes()
-
-        setUserTypes(response?.data || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch users')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserTypes()
-  }, [])
 
   const onSubmit = (data: User, e: any) => {
     e.preventDefault()
     setLoading(true)
-    setAddType(false)
 
     const submissionData = {
       ...data,
       status: 'Pending'
     }
 
-    // console.log(submissionData, 'submissionData')
-
     createUser(submissionData)
       .then(res => {
-        toast.success(res?.data.message, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.success(res?.data.message)
         if (onTypeAdded) {
           onTypeAdded()
         }
 
-        setAddType(true)
         reset()
         setOpen(false)
       })
@@ -233,8 +186,8 @@ const AddUserForm = (
                   error={!!errors.user_type}
                   helperText={errors.user_type?.message}
                 >
-                  {userTypes &&
-                    userTypes?.map(user => (
+                  {data &&
+                    data.map((user: UserType) => (
                       <MenuItem key={user.id} value={user.id}>
                         {user.type}
                       </MenuItem>
@@ -285,16 +238,6 @@ const AddUserForm = (
                   helperText={errors.postalCode?.message}
                 />
               </Grid>
-
-              {/* <div className='flex items-center gap-4'>
-                <Button variant='contained' type='submit' disabled={loading}>
-                  Submit
-                </Button>
-                <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>
-                  Cancel
-                </Button>
-              </div> */}
-              {/* {loading && <Loader />} */}
             </Grid>
             <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16 mt-5'>
               <Button variant='contained' type='submit' disabled={loading}>
@@ -308,11 +251,9 @@ const AddUserForm = (
             {loading && <Loader />}
           </DialogContent>
         </form>
-
-        <Toaster />
       </div>
     </Dialog>
   )
 }
 
-export default AddUserForm
+export default AddUser

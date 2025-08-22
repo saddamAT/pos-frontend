@@ -10,11 +10,12 @@ type OpenDialogOnElementClickProps = {
   elementProps?: any
   dialogProps?: any
   onTypeAdded?: any
+  onConfirm?: () => void
 }
 
 const OpenDialogOnElementClick = (props: OpenDialogOnElementClickProps) => {
   // Props
-  const { element: Element, dialog: Dialog, elementProps, dialogProps, onTypeAdded } = props
+  const { element: Element, dialog: Dialog, elementProps, dialogProps, onTypeAdded, onConfirm } = props
 
   // States
   const [open, setOpen] = useState(false)
@@ -34,7 +35,7 @@ const OpenDialogOnElementClick = (props: OpenDialogOnElementClickProps) => {
       {/* Receive element component as prop and we will pass onclick event which changes state to open */}
       <Element onClick={handleOnClick} {...restElementProps} />
       {/* Receive dialog component as prop and we will pass open and setOpen props to that component */}
-      <Dialog open={open} setOpen={setOpen} {...dialogProps} onTypeAdded={onTypeAdded} />
+      <Dialog open={open} setOpen={setOpen} {...dialogProps} onTypeAdded={onTypeAdded} onConfirm={onConfirm} />
     </>
   )
 }

@@ -11,30 +11,28 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import { toast, Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
-import { BusinessType } from '@/types/apps/businessTypes'
+import { toast } from 'react-hot-toast'
 import { getAllBusiness } from '@/api/business'
 import { ChatGptType } from '@/api/interface/interfaceChatGPT'
 import { updateChatGPT } from '@/api/chatGpt'
+import { BusinessType } from '@/api/interface/businessInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditChatGptInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: ChatGptType
   onTypeAdded?: any
+  mode?: string
+  businesses: BusinessType[]
 }
 
-const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoProps) => {
-  const router = useRouter()
-  const { lang: locale } = useParams()
+const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded, mode, businesses }: EditChatGptInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
   const {
     register,
@@ -42,22 +40,8 @@ const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoPr
     formState: { errors }
   } = useForm<ChatGptType>()
 
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
-
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<ChatGptType | null>(null)
 
   const handleClose = () => {
     setOpen(false)
@@ -66,39 +50,43 @@ const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoPr
   const onSubmit = (data1: ChatGptType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateChatGPT(id, data1)
-      .then(res => {
-        toast.success('Chat Gpt Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
+    if (mode === 'edit' && data) {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+  const handleConfirm = async () => {
+    if (!payloadData) return
+    try {
+      setLoading(true)
+      await updateChatGPT(payloadData.id, payloadData)
+      toast.success('Feed To Chat Gpt Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      // console.log(error, 'error--')
+
+      if (error?.data?.detail) {
+        toast.error(error?.data?.detail, {
+          duration: 5000
         })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
-      })
-      .catch(error => {
-        if (error?.data?.business) {
-          toast.error(error?.data?.business[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else if (error?.data?.active) {
-          toast.error(error?.data?.active[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        } else {
-          toast.error('Error In Updating  Chat Gpt', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+      } else if (error?.data?.active) {
+        toast.error(error?.data?.active[0], {
+          duration: 5000
+        })
+      } else {
+        toast.error('Error In Updating  Chat Gpt', {
+          duration: 5000
+        })
+      }
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
@@ -116,14 +104,17 @@ const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoPr
                 select
                 fullWidth
                 id='business'
-                label='Select Business'
+                label='Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{
+                  readOnly: mode === 'edit',
+                  ...register('business')
+                }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+                {businesses &&
+                  businesses?.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
@@ -153,7 +144,7 @@ const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoPr
                 helperText={errors.active?.message}
               >
                 <MenuItem value='' disabled>
-                  Select Status
+                  Status
                 </MenuItem>
                 <MenuItem value='true'>Active</MenuItem>
                 <MenuItem value='false'>Inactive</MenuItem>
@@ -181,7 +172,15 @@ const EditChatGptInfo = ({ open, setOpen, data, onTypeAdded }: EditChatGptInfoPr
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Chat Gpt'
+          description='Are you sure you want to edit this  Chat Gpt?'
+        />
+      )}
     </Dialog>
   )
 }

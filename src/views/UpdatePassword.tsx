@@ -2,14 +2,10 @@
 
 // React Imports
 import { useState } from 'react'
-
 // Next Imports
 import Link from 'next/link'
-
 import { useParams, useRouter } from 'next/navigation'
-
-import toast, { Toaster } from 'react-hot-toast'
-
+import toast from 'react-hot-toast'
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
@@ -25,9 +21,6 @@ import classnames from 'classnames'
 
 import type { ThemeColor, SystemMode } from '@core/types'
 
-// Third-party Imports
-
-// Component Imports
 import DirectionalIcon from '@components/DirectionalIcon'
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
@@ -108,17 +101,13 @@ const UpdatePassword = ({ mode }: { mode: SystemMode }) => {
     updateUserPassword(data)
       .then(res => {
         if (res?.status === 200) {
-          toast.success(res?.data?.message, {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
-          // router.push('/login')
+          toast.success(res?.data?.message)
+
           router.push(getLocalizedUrl('/login', locale))
         }
       })
       .catch(error => {
-        toast.error(error?.data?.error || 'An error occurred while updating the password.', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.error(error?.data?.error || 'An error occurred while updating the password.')
       })
       .finally(() => {
         setLoading(false)
@@ -208,7 +197,6 @@ const UpdatePassword = ({ mode }: { mode: SystemMode }) => {
               </Link>
             </Typography>
           </form>
-          <Toaster />
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ import themeConfig from '@configs/themeConfig'
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useSettings } from '@core/hooks/useSettings'
 import TransparentLogo from './../../../../public/images/logos/transparent-logo.png'
+import { useSession } from 'next-auth/react'
 
 type LogoTextProps = {
   isHovered?: VerticalNavContextProps['isHovered']
@@ -54,6 +55,7 @@ interface LogoProps {
 }
 
 const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
+  const { data } = useSession()
   // Refs
   const logoTextRef = useRef<HTMLSpanElement>(null)
 
@@ -83,7 +85,18 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
     <>
       <div className='flex items-center'>
         {/* <VuexyLogo className='text-2xl text-primary' /> */}
-        {/* <Image src={TransparentLogo} alt='logo' className='w-12 h-auto' /> */}
+
+        {/* {data?.user?.userBusinesses?.[0]?.logo && (
+          <Image
+            // src={data.user.userBusinesses[0].logo}
+            // width={48} // or any width in pixels
+            // height={48}
+            alt='logo'
+            className='w-12 h-auto'
+          />
+        )} */}
+        <Image src={TransparentLogo} alt='logo' className='w-12 h-auto' />
+
         <LogoText
           color={color}
           ref={logoTextRef}

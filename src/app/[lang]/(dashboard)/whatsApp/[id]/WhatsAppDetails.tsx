@@ -1,28 +1,17 @@
 // MUI Imports
 'use client'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Divider from '@mui/material/Divider'
-import Button from '@mui/material/Button'
-import type { ButtonProps } from '@mui/material/Button'
 
-// Type Imports
-import type { ThemeColor } from '@core/types'
-
-// Component Imports
-import EditUserInfo from '@components/dialogs/edit-user-info'
-import EditMenuInfo from '@components/dialogs/edit-menu-info'
-import EditWhatsAppInfo from '@components/dialogs/edit-whatsApp-info'
-import ConfirmationDialog from '@components/dialogs/confirmation-dialog'
-import OpenDialogOnElementClick from '@components/dialogs/OpenDialogOnElementClick'
-import CustomAvatar from '@core/components/mui/Avatar'
 import { useEffect, useState } from 'react'
-import { getMenuById } from '@/api/menu'
-import { MenuDataType } from '@/api/interface/menuIterface'
+import Grid from '@mui/material/Grid'
+import { useParams, useRouter } from 'next/navigation'
+import CustomTextField from '@core/components/mui/TextField'
+
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { Locale } from '@/configs/i18n'
 import { WhatsAppDataType } from '@/api/interface/whatsappInterface'
 import { getWhatsAppById } from '@/api/whatsapp'
+import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewWhatsAppProps = {
   id: string
@@ -31,22 +20,21 @@ type PreviewWhatsAppProps = {
 // MenuDataType
 const WhatsAppDetails = ({ id }: PreviewWhatsAppProps) => {
   const [whatsAppItemData, setWhatsAppItemData] = useState<WhatsAppDataType | null>(null)
-  // Vars
-  const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
-    children,
-    color,
-    variant
-  })
+
+  const { lang: locale } = useParams() as { lang: Locale }
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
+
+  const handleClose = () => {
+    setOpen(false)
+    router.push(getLocalizedUrl('/platforms', locale as Locale))
+  }
 
   useEffect(() => {
     const fetchWhats = async () => {
       try {
         const response = await getWhatsAppById(Number(id))
-        // console.log(response?.data, 'response Of Single Whats App------')
         setWhatsAppItemData(response?.data)
-
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
       } catch (error: any) {
         // Handle error
       }
@@ -56,75 +44,77 @@ const WhatsAppDetails = ({ id }: PreviewWhatsAppProps) => {
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div>
-            <Typography variant='h5'>Whast App Details</Typography>
-            <Divider className='mlb-4' />
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business
-                </Typography>
-                <Typography>{whatsAppItemData && whatsAppItemData.business}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Phone ID
-                </Typography>
-                <Typography>{whatsAppItemData && whatsAppItemData.phone_id}</Typography>
-              </div>
+      <Dialog open={open} scroll='body' onClose={handleClose} sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+        <DialogCloseButton onClick={handleClose} disableRipple>
+          <i className='tabler-x' />
+        </DialogCloseButton>
+        <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-11 sm:pbe-4 sm:pli-11'>
+          WhatsApp Details
+        </DialogTitle>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Access Token
-                </Typography>
-                <Typography>{whatsAppItemData && whatsAppItemData.access_token}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Status
-                </Typography>
-                <Typography color='text.primary'>
-                  {whatsAppItemData && whatsAppItemData.active ? 'active' : ''}
-                </Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Web Hook Token
-                </Typography>
-                <Typography color='text.primary'>{whatsAppItemData && whatsAppItemData.webhook_token}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  WhatsApp Account Id
-                </Typography>
-                <Typography color='text.primary'>{whatsAppItemData && whatsAppItemData.whatsapp_account_id}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Catalog Id
-                </Typography>
-                <Typography color='text.primary'>{whatsAppItemData && whatsAppItemData.catalog_id}</Typography>
-              </div>
-            </div>
-          </div>
-          {/* <div className='flex gap-4 justify-center'>
-            <OpenDialogOnElementClick
-              element={Button}
-              elementProps={buttonProps('Edit', 'primary', 'contained')}
-              dialog={EditWhatsAppInfo}
-              dialogProps={{ data: whatsAppItemData }}
-            />
-            <OpenDialogOnElementClick
-              element={Button}
-              elementProps={buttonProps('Suspend', 'error', 'tonal')}
-              dialog={ConfirmationDialog}
-              dialogProps={{ type: 'suspend-account' }}
-            />
-          </div> */}
-        </CardContent>
-      </Card>
+        <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          <Grid container spacing={5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.business}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Phone ID'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.phone_id}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <CustomTextField
+                label='Access Token'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.access_token}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Status'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.active ? 'active' : ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Web Hook Token'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.webhook_token}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='WhatsApp Account ID'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.whatsapp_account_id}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Catalog ID'
+                fullWidth
+                defaultValue={whatsAppItemData && whatsAppItemData?.catalog_id}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

@@ -13,7 +13,7 @@ import CustomTextField from '@/@core/components/mui/TextField'
 import { CreateOrder, CreateOrderItem } from '@/api/interface/orderInterface'
 import { useForm } from 'react-hook-form'
 import { getAllResturants } from '@/api/resturant'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { useParams, useRouter } from 'next/navigation'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
@@ -24,7 +24,7 @@ import { RestaurantType } from '@/types/apps/restoTypes'
 const OrderMenuBar = () => {
   const router = useRouter()
   const { lang: locale } = useParams()
-  const defaultAddress = 'Sharjah Shoes Sadar Bazar Haveli Lakha'
+  const defaultAddress = 'Gulberg III Makkah colony Near Pizza city online '
   const defaultSpecialInstructions = 'Check products carefully before order'
 
   const {
@@ -63,6 +63,7 @@ const OrderMenuBar = () => {
   const [subtotal, setSubtotal] = useState<number>(0)
   const [currencySymbol, setCurrencySymbol] = useState('')
   // console.log(currencySymbol, 'currencySymbol')
+  // console.log(allMenus, 'allMenus')
 
   const [order, setOrder] = useState<
     {
@@ -77,7 +78,6 @@ const OrderMenuBar = () => {
       quantity: number
     }[]
   >([])
-  console.log(order, 'order item--------->')
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue)
@@ -291,7 +291,7 @@ const OrderMenuBar = () => {
       is_pos: true
     }
 
-    console.log(submissionData, 'submissionData')
+    // console.log(submissionData, 'submissionData')
 
     createOrder(submissionData)
       .then(res => {
@@ -303,7 +303,7 @@ const OrderMenuBar = () => {
         toast.success('Order created successfully')
 
         // Reset the order items and form after successful order
-        // resetOrderAndForm()
+        resetOrderAndForm()
       })
       .catch(error => {
         console.error('Error creating order:', error)
@@ -311,14 +311,15 @@ const OrderMenuBar = () => {
       })
       .finally(() => {
         setLoading(false)
+        setOrderSuccessFlag(true)
       })
   }
 
-  const handlePrintOrder = (id: number, e: any) => {
-    e.preventDefault()
-    resetOrderAndForm()
-    router.push(getLocalizedUrl(`/orders/${id}`, locale as Locale))
-  }
+  // const handlePrintOrder = (id: number, e: any) => {
+  //   e.preventDefault()
+  //   resetOrderAndForm()
+  //   router.push(getLocalizedUrl(`/orders/${id}`, locale as Locale))
+  // }
 
   return (
     <div>
@@ -328,7 +329,7 @@ const OrderMenuBar = () => {
             <div className='flex flex-col gap-6'>
               <div className='flex items-center gap-2.5'>
                 <Typography variant='h5' className='min-is-[95px]'>
-                  Select Outlet:
+                  Outlet:
                 </Typography>
                 <CustomTextField
                   className='w-full sm:w-auto'
@@ -363,7 +364,7 @@ const OrderMenuBar = () => {
                   multiline
                   rows={3}
                   placeholder='Enter Special Instruction'
-                  defaultValue='Check shoes size and color before packing'
+                  defaultValue='Check orders details before packing'
                   {...register('special_instruction', { required: 'Special Instruction is required' })}
                   error={!!errors.special_instruction}
                   helperText={errors.special_instruction?.message}
@@ -372,25 +373,12 @@ const OrderMenuBar = () => {
             </div>
 
             <div className='flex flex-col gap-2'>
-              <div className='flex items-center gap-4'>
-                <Typography variant='h5' className='min-is-[95px]'>
-                  Resturant Details:
-                </Typography>
-              </div>
-              <div className='flex items-center'>
-                <Typography className='min-is-[95px] mie-4' color='text.primary'>
-                  Resturant Status:
-                </Typography>
-                <Typography className='min-is-[95px] mie-4' color='text.primary'>
-                  {selectedRestoData?.active ? 'Active' : 'In Active'}
-                </Typography>
-              </div>
               <div className='flex items-center'>
                 <CustomTextField
                   select
                   fullWidth
                   id='delivery_type'
-                  label='Select Delivery Type *'
+                  label='Delivery Type *'
                   {...register('delivery_type', {
                     required: 'Delivery Type is required'
                   })}
@@ -399,8 +387,8 @@ const OrderMenuBar = () => {
                   value={watch('delivery_type') || ''}
                 >
                   {' '}
-                  <MenuItem key='Select Delivery Type' value='Select Delivery Type'>
-                    Select Delivery Type
+                  <MenuItem key='Delivery Type' value='Delivery Type'>
+                    Delivery Type
                   </MenuItem>
                   <MenuItem value='delivery'>Delivery</MenuItem>
                   <MenuItem value='pickup'>Pick Up</MenuItem>
@@ -424,7 +412,7 @@ const OrderMenuBar = () => {
         </div>
       </Box>
       <Box sx={{ display: 'flex', gap: 3, width: '100%' }}>
-        <Box sx={{ width: '75%', bgcolor: 'background.paper', textAlign: 'left' }}>
+        <Box sx={{ width: '70%', bgcolor: 'background.paper', textAlign: 'left' }}>
           <Tabs value={value} onChange={handleChange} variant='scrollable' scrollButtons allowScrollButtonsMobile>
             {foodTypeData?.map((food, index) => (
               <Tab label={food.name} key={food.id} value={index} sx={{ fontWeight: 'bold' }} />
@@ -448,7 +436,7 @@ const OrderMenuBar = () => {
           </Box>
         </Box>
 
-        <Box sx={{ width: '25%', bgcolor: 'background.paper' }}>
+        <Box sx={{ width: '30%', bgcolor: 'background.paper' }}>
           <Card sx={{ p: 2 }}>
             <Typography variant='h6' className='mb-4'>
               Current Order
@@ -456,67 +444,56 @@ const OrderMenuBar = () => {
 
             {order.length > 0 ? (
               order.map(item => (
-                <Box
-                  key={item.id}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 2,
-                    p: 1,
-                    borderBottom: '1px solid #eee'
-                  }}
-                >
-                  <Box>
+                <Box key={item.id}>
+                  <Box className='mb-4 mt-4'>
                     <Typography variant='body1'>{item.name}</Typography>
+                  </Box>
 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 2 // space between input and icon group
+                    }}
+                  >
+                    {/* Input on the left */}
                     <input
                       type='number'
                       value={item.price}
                       min='1'
                       onChange={e => {
                         let newPrice = parseFloat(e.target.value)
-
                         if (isNaN(newPrice) || newPrice <= 0) {
-                          newPrice = 1 // Ensures price is always positive
+                          newPrice = 1
                         }
-
                         setOrder(prev =>
                           prev.map(orderItem =>
                             orderItem.id === item.id ? { ...orderItem, price: newPrice } : orderItem
                           )
                         )
                       }}
-                      style={{
-                        width: '100px',
-                        padding: '4px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        textAlign: 'center'
-                      }}
+                      className='input-price'
                     />
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconButton
-                      size='small'
-                      onClick={() => decrementQuantity(item.id)}
-                      sx={{ border: '1px solid #ddd' }}
-                    >
-                      -
-                    </IconButton>
-                    <Typography component='span' mx={1}>
-                      {item.quantity}
-                    </Typography>
-                    <IconButton
-                      size='small'
-                      onClick={() => incrementQuantity(item.id)}
-                      sx={{ border: '1px solid #ddd' }}
-                    >
-                      +
-                    </IconButton>
-                    <IconButton size='small' color='error' onClick={() => deleteItem(item.id)}>
-                      ×
-                    </IconButton>
+
+                    {/* Icon group on the right */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <IconButton size='small' onClick={() => decrementQuantity(item.id)} className='decrement-icon'>
+                        <i className='tabler-minus' />
+                      </IconButton>
+
+                      <Typography component='span' mx={1}>
+                        {item.quantity}
+                      </Typography>
+
+                      <IconButton size='small' onClick={() => incrementQuantity(item.id)} className='decrement-icon'>
+                        <i className='tabler-plus' />
+                      </IconButton>
+
+                      <IconButton size='small' color='error' onClick={() => deleteItem(item.id)}>
+                        <i className='tabler-x' />
+                      </IconButton>
+                    </Box>
                   </Box>
                 </Box>
               ))
@@ -561,11 +538,12 @@ const OrderMenuBar = () => {
               color='primary'
               fullWidth
               onClick={handleSubmit(onSubmit)}
-              disabled={loading || order.length === 0 || orderSuccessFlag}
+              // disabled={loading || order.length === 0 || orderSuccessFlag}
+              disabled={loading || order.length === 0}
             >
               Process Order
             </Button>
-            <Button
+            {/* <Button
               style={{ marginTop: '10px' }}
               variant='contained'
               color='primary'
@@ -574,12 +552,11 @@ const OrderMenuBar = () => {
               disabled={!orderSuccessFlag}
             >
               Print Order
-            </Button>
+            </Button> */}
           </Card>
         </Box>
       </Box>
       {loading && <Loader />}
-      {/* <Toaster /> */}
     </div>
   )
 }

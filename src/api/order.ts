@@ -4,18 +4,24 @@ import type { OrderDataType } from './interface/orderInterface'
 import { ENDPOINTS } from './vars/vars'
 import { GET, POST, GETBYID, PATCH, SEARCHBYPARAMS, SEARCHBYPARAMSPAGINATION, DELETE } from './api'
 
-export async function getAllOrders(): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.orders}/`
-    const response = await GET(url)
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching Orders data')
-    }
-  }
+import { apiRequest } from '@/utils/apiRequest'
+
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
+}
+
+const getOrdersBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+
+  return `${apiUrl}/whatseat/${ENDPOINTS.orders}`
+}
+
+export async function getAllOrders(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getOrdersBaseUrl()}/`)
 }
 
 export async function createOrder(data: OrderDataType): Promise<any> {

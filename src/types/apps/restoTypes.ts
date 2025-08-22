@@ -40,6 +40,7 @@ export interface UserType {
   name: string | null
   email: string
   user_id: string | null
+  type: string
   status: string
   createdAt: string // ISO date string
 }

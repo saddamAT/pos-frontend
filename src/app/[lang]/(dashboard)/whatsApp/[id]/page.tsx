@@ -12,7 +12,6 @@ type PageProps = {
 const WhatsAppPreview = ({ params }: PageProps) => {
   return (
     <Grid container spacing={6}>
-      {/* hello how are you */}
       <Grid item xs={6}>
         <WhatsAppDetails id={params.id} />
       </Grid>

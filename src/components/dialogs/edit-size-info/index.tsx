@@ -16,10 +16,11 @@ import Typography from '@mui/material/Typography'
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 import { SizeDataType } from '@/api/interface/sizeInterface'
 import { updateMenuSize } from '@/api/size'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditSizeInfoProps = {
   open: boolean
@@ -27,10 +28,13 @@ type EditSizeInfoProps = {
   data?: SizeDataType
   onTypeAdded?: any
   id?: string
+  mode?: string
 }
 
-const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded }: EditSizeInfoProps) => {
+const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded, mode }: EditSizeInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<SizeDataType | null>(null)
 
   const {
     register,
@@ -45,34 +49,43 @@ const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded }: EditSizeInfoProp
   const onSubmit = (data1: SizeDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    updateMenuSize(id, data1)
-      .then(res => {
-        toast.success('Menu Size Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
+    if (mode === 'edit') {
+      setPayloadData({ ...data1, id: data1?.business ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!payloadData) return
+
+    const id = data?.id ?? 0
+    setLoading(true)
+
+    try {
+      await updateMenuSize(id, payloadData)
+
+      toast.success('Menu Size Updated Successfully', {
+        duration: 5000
       })
-      .catch(error => {
-        console.log(error, 'error Menu Size Update api')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error) {
+      console.error('Error updating menu size:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Edit Menu Size Information
+        Edit Product Size Information
         <Typography component='span' className='flex flex-col text-center'>
-          Updating Menu Size details will receive a privacy audit.
+          Updating Product Size details will receive a privacy audit.
         </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -124,7 +137,7 @@ const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded }: EditSizeInfoProp
             <Grid item xs={12} sm={6}>
               <CustomTextField
                 fullWidth
-                label='Menu'
+                label='Product'
                 InputProps={{ readOnly: true }}
                 defaultValue={data?.menu?.title || ''}
               />
@@ -140,7 +153,15 @@ const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded }: EditSizeInfoProp
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Size'
+          description='Are you sure you want to edit this Size?'
+        />
+      )}
     </Dialog>
   )
 }

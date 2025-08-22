@@ -5,7 +5,6 @@ import { useState } from 'react'
 
 // Next Imports
 import { useParams, useRouter } from 'next/navigation'
-
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -24,7 +23,7 @@ import type { Locale } from '@configs/i18n'
 import classnames from 'classnames'
 
 // Type Imports
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 import type { SystemMode } from '@core/types'
 
@@ -39,13 +38,11 @@ import themeConfig from '@configs/themeConfig'
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
-import CustomModal from '@/components/CustomModal'
 
 import type { LoginUser } from '@/api/interface/userInterface'
-import { loginUser, verifyUser } from '@/api/user'
-import Loader from '@/components/loader/Loader'
 
-import { useAuthStore } from '@/store/authStore'
+import Loader from '@/components/loader/Loader'
+import { signIn } from 'next-auth/react'
 
 // Vars
 const darkImg = '/images/pages/auth-mask-dark.png'
@@ -80,17 +77,9 @@ const MaskImg = styled('img')({
 })
 
 const Login = ({ mode }: { mode: SystemMode }) => {
-  const { user, token, setToken, setUser } = useAuthStore()
-  const [open, setOpen] = useState<boolean>(false)
-  const [email, setEmail] = useState<string>('')
   const [loading, setLoading] = useState<boolean>(false)
-  const [loadingVerify, setLoadingVerify] = useState<boolean>(false)
+
   const { lang: locale } = useParams() as { lang: Locale }
-  const [toastShown, setToastShown] = useState<boolean>(false)
-  const [toastSn, setToastSn] = useState<boolean>(false)
-
-  // console.log(loggedInUser, 'loggedInUser')
-
   const [isRememberMeChecked, setIsRememberMeChecked] = useState<boolean>(false)
 
   const {
@@ -99,127 +88,25 @@ const Login = ({ mode }: { mode: SystemMode }) => {
     formState: { errors }
   } = useForm<LoginUser>()
 
-  // console.log(user, 'user latest')
-
-  const onSubmit = (data: LoginUser, e: any) => {
+  const onSubmit = async (data: LoginUser, e: any) => {
     e.preventDefault()
-    setEmail(data.email)
     setLoading(true)
 
-    loginUser(data)
-      .then(res => {
-        if (res?.status === 200 && res?.data?.isActive) {
-          toast.success('Email Verification Code is sent to your email.', { duration: 5000, position: 'top-right' })
-          setIsModalOpen(true)
-          // if (!toastShown) {
+    const res = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      redirect: false
+    })
+    setLoading(false)
 
-          // setToastShown(true)
-          // }
-        } else {
-          // toast.success(res?.data?.message)
-          toast.dismiss()
-          toast.success(res?.data?.message, { duration: 5000, position: 'top-right' })
-        }
-      })
-      .catch(error => {
-        // console.log(error, 'error login api')
-        toast.dismiss()
-        if (error.non_field_errors) {
-          toast.error(error?.non_field_errors[0], {
-            duration: 5000, // Duration in milliseconds (5 seconds)
-            position: 'top-right'
-          })
-        } else if (typeof error === 'string') {
-          toast.error(error, {
-            duration: 5000, // Duration in milliseconds (5 seconds)
-            position: 'top-right'
-          })
-        } else {
-          toast.error(error?.message, {
-            duration: 5000, // Duration in milliseconds (5 seconds)
-            position: 'top-right'
-          })
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }
+    if (res && res.ok && res.error === null) {
+      toast.success('User LoggedIn Successfully.')
 
-  const handleVerificationSubmit = async (code: number, email: string) => {
-    setLoadingVerify(true)
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}account/verify/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, code })
-      })
-
-      // console.log(res, 'res of verfied User--------')
-
-      // if (!res.ok) {
-      //   const errorText = await res.text()
-
-      //   throw new Error(errorText)
-      // }
-
-      if (!res.ok) {
-        // Try to parse the error response as JSON if possible
-        const errorText = await res.text()
-        try {
-          const errorJson = JSON.parse(errorText)
-          // console.log(errorJson, 'error messgae')
-          if (errorJson?.code) {
-            toast.error(errorJson?.code[0], {
-              duration: 5000, // Duration in milliseconds (5 seconds)
-              position: 'top-right'
-            })
-          } else {
-            toast.error(errorJson?.error, {
-              duration: 5000, // Duration in milliseconds (5 seconds)
-              position: 'top-right'
-            })
-          }
-          // console.log(errorJson?.error, 'error messgae')
-
-          // throw new Error(errorJson.error || 'Verification failed')
-        } catch {
-          // If errorText is not JSON, throw it as a plain error
-          // throw new Error(errorText || 'Verification failed')
-        }
+      router.replace(getLocalizedUrl('/home', locale))
+    } else {
+      if (res?.error) {
+        toast.error(res.error)
       }
-
-      if (res?.status === 200) {
-        setIsModalOpen(false)
-      }
-
-      const data = await res.json()
-
-      // console.log(data, 'verified  user object')
-
-      // const setToken = useAuthStore.getState().setToken
-      // const setUser = useAuthStore.getState().setUser
-
-      localStorage.setItem('auth_token', data?.token)
-      localStorage.setItem('user_type', data?.user?.user_type)
-
-      setToken(data?.token)
-      setUser(data?.user)
-
-      document.cookie = `auth_token=${data.token}; path=/; max-age=604800; Secure; HttpOnly`
-      toast.success(data.message, {
-        duration: 5000, // Duration in milliseconds (5 seconds)
-        position: 'top-right'
-      })
-      // router.push('/home')
-      // router.push(getLocalizedUrl('/home', locale as Locale))
-      router.push(getLocalizedUrl('/home', locale))
-    } catch (error: any) {
-    } finally {
-      setLoadingVerify(false)
     }
   }
 
@@ -227,7 +114,6 @@ const Login = ({ mode }: { mode: SystemMode }) => {
 
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
 
   // Hooks
   const router = useRouter()
@@ -324,18 +210,7 @@ const Login = ({ mode }: { mode: SystemMode }) => {
               </Link>
             </div>
             {loading && <Loader />}
-            <CustomModal
-              email={email}
-              open={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              title='Verify Your Email'
-              description='Enter the verification code sent to your email.'
-              onSubmit={handleVerificationSubmit}
-              submitButtonText='Submit'
-              loadingVerify={loadingVerify}
-            />
           </form>
-          <Toaster position='top-right' reverseOrder={false} />
         </div>
       </div>
     </div>

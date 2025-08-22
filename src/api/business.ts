@@ -1,22 +1,28 @@
-import axios from 'axios'
-
-import type { BusinessDataType, BusinessDataTypeForAddBusiness } from './interface/businessInterface'
-import { DELETE, GET, GETBYID, PATCH, POST, POSTFILE, SEARCHBYPARAMSPAGINATION } from './api'
+import type { BusinessEditPayload, BusinessDataTypeForAddBusiness } from './interface/businessInterface'
+import { DELETE, PATCH, POSTFILE, SEARCHBYPARAMSPAGINATION } from './api'
 import { ENDPOINTS } from './vars/vars'
-import { BusinessEditPayload, BusinessType } from '@/types/apps/businessTypes'
+import { apiRequest } from '@/utils/apiRequest'
 
-export async function getAllBusiness(): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.userbusinesses}/`
-    const response = await GET(url)
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching business data')
-    }
-  }
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
+}
+
+const getUserBusinessBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+
+  return `${apiUrl}/whatseat/${ENDPOINTS.userbusinesses}`
+}
+
+export async function getBusinessById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBusinessBaseUrl()}/${id}/`)
+}
+
+export async function getAllBusiness(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBusinessBaseUrl()}/`)
 }
 
 export async function getPaginatedBusiness(params: any): Promise<any> {
@@ -62,20 +68,7 @@ export async function deleteBusiness(id: string): Promise<any> {
     }
   }
 }
-export async function getBusinessById(id: number): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.userbusinesses}`
-    const response = await GETBYID(url, id)
 
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching userbusinesses data')
-    }
-  }
-}
 export async function updateBusiness(id: number, data: BusinessEditPayload): Promise<any> {
   try {
     const url = `whatseat/${ENDPOINTS.userbusinesses}/${id}/`

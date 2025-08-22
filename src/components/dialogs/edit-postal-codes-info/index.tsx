@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -11,35 +11,29 @@ import Button from '@mui/material/Button'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
-
 import Typography from '@mui/material/Typography'
-
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-
-import toast, { Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/authStore'
-import { ResturantDataType } from '@/api/interface/resturantInterface'
-import { updateResturant } from '@/api/resturant'
+import toast from 'react-hot-toast'
 import { updatePostalCodes } from '@/api/postalCodes'
 import { postalCodesDataType } from '@/api/interface/postalCodesInterface'
-import { BusinessType } from '@/types/apps/businessTypes'
 import { MenuItem } from '@mui/material'
-import { getAllBusiness } from '@/api/business'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
+import { BusinessType } from '@/api/interface/businessInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditPostalCodesInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: postalCodesDataType
   onTypeAdded?: any
+  mode?: string
+  businesses: BusinessType[]
 }
 
-const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded }: EditPostalCodesInfoProps) => {
+const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesses }: EditPostalCodesInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
+  console.log(data, 'data')
 
   const {
     register,
@@ -47,51 +41,45 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded }: EditPostalCod
     formState: { errors }
   } = useForm<postalCodesDataType>()
 
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<postalCodesDataType | null>(null)
 
   const handleClose = () => {
     setOpen(false)
   }
 
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
-
   const onSubmit = (data1: postalCodesDataType, e: any) => {
     e.preventDefault()
+    if (mode === 'edit') {
+      setPayloadData({ ...data1, id: data1?.business ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
 
-    const id: number = data?.id ?? 0
-    updatePostalCodes(id, data1)
-      .then(res => {
-        toast.success('PostalCodes Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
-        setOpen(false)
+  const handleConfirm = async () => {
+    if (!payloadData) return
+
+    const id = data?.id ?? 0
+    setLoading(true)
+
+    try {
+      await updatePostalCodes(id, payloadData)
+
+      toast.success('Postal Codes updated successfully', {
+        duration: 5000
       })
-      .catch(error => {
-        console.log(error, 'error PostalCodes Update api')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error) {
+      console.error('Error updating postal codes:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
@@ -115,8 +103,8 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded }: EditPostalCod
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+                {businesses &&
+                  businesses?.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
@@ -157,7 +145,15 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded }: EditPostalCod
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Postal Codes'
+          description='Are you sure you want to edit this Postal Codes?'
+        />
+      )}
     </Dialog>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 // MUI Imports
@@ -13,49 +13,36 @@ import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-
-import { useParams, useRouter } from 'next/navigation'
 import { User } from '@/api/interface/userInterface'
-import { getUserTypes, updateUser } from '@/api/user'
+import { updateUser } from '@/api/user'
 
 type EditUserInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: User
+  userType: UserType[]
   onTypeAdded?: any
 }
+interface UserType {
+  id: number | string
+  type: string
+  description: string
+  active: boolean
+}
 
-const EditUserInfo = ({ open, setOpen, data, onTypeAdded }: EditUserInfoProps) => {
+const EditUserInfo = ({ open, setOpen, data, onTypeAdded, userType }: EditUserInfoProps) => {
   const {
     register,
     handleSubmit,
     formState: { errors }
   } = useForm<User>()
 
-  const [userTypes, setUserTypes] = useState<UserRole[]>([])
   const [loading, setLoading] = useState<boolean>(false)
-
-  useEffect(() => {
-    const fetchUserTypes = async () => {
-      setLoading(true)
-
-      try {
-        const response = await getUserTypes()
-        setUserTypes(response?.data || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch users')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserTypes()
-  }, [])
 
   const handleClose = () => {
     setOpen(false)
@@ -67,9 +54,7 @@ const EditUserInfo = ({ open, setOpen, data, onTypeAdded }: EditUserInfoProps) =
     const id: number = data?.id ?? 0
     updateUser(id, data1)
       .then(res => {
-        toast.success('User Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.success('User Updated Successfully')
         if (onTypeAdded) {
           onTypeAdded()
         }
@@ -163,8 +148,8 @@ const EditUserInfo = ({ open, setOpen, data, onTypeAdded }: EditUserInfoProps) =
                 error={!!errors.user_type}
                 helperText={errors.user_type?.message}
               >
-                {userTypes &&
-                  userTypes?.map(user => (
+                {userType &&
+                  userType.map((user: UserType) => (
                     <MenuItem key={user.id} value={user.id}>
                       {user.type}
                     </MenuItem>
@@ -227,7 +212,6 @@ const EditUserInfo = ({ open, setOpen, data, onTypeAdded }: EditUserInfoProps) =
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
     </Dialog>
   )
 }

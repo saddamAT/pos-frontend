@@ -1,89 +1,135 @@
 // MUI Imports
 'use client'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Divider from '@mui/material/Divider'
-import { useEffect, useState } from 'react'
-import { BusinessType, BusinessTypeForFile } from '@/types/apps/businessTypes'
-import { getBusinessById } from '@/api/business'
 
-type PreviewChatGptProps = {
-  id: string
+import Grid from '@mui/material/Grid'
+import { useParams, useRouter } from 'next/navigation'
+import CustomTextField from '@core/components/mui/TextField'
+import { BusinessTypeForFile } from '@/api/interface/businessInterface'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { Locale } from '@/configs/i18n'
+import { useState } from 'react'
+import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
+
+type PreviewBusinessProps = {
+  businessItemData: BusinessTypeForFile
 }
 
-// MenuDataType
-const BusinessDetails = ({ id }: PreviewChatGptProps) => {
-  const [businessItemData, setBusinessItemData] = useState<BusinessTypeForFile | null>(null)
-  // Vars
+const BusinessDetails = ({ businessItemData }: PreviewBusinessProps) => {
+  const { lang: locale } = useParams() as { lang: Locale }
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
 
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getBusinessById(Number(id))
-        // console.log(response?.data, 'response Of BusinessById------')
-        setBusinessItemData(response?.data)
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
-      } catch (error: any) {
-        console.log(error, 'error')
-
-        // Handle error
-      }
-    }
-    fetchBusiness()
-  }, [id])
+  const handleClose = () => {
+    setOpen(false)
+    router.push(getLocalizedUrl('/business', locale as Locale))
+  }
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div>
-            <Typography variant='h5'>Business Details</Typography>
-            <Divider className='mlb-4' />
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business Meta Id:
-                </Typography>
-                <Typography>{businessItemData && businessItemData.business_id}</Typography>
-              </div>
+      <Dialog
+        // fullWidth
+        open={open}
+        // maxWidth='md'
+        scroll='body'
+        onClose={handleClose}
+        sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
+      >
+        <DialogCloseButton onClick={handleClose} disableRipple>
+          <i className='tabler-x' />
+        </DialogCloseButton>
+        <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-11 sm:pbe-4 sm:pli-11'>
+          Business Details
+        </DialogTitle>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business Document :
-                </Typography>
-                <Typography>{businessItemData && businessItemData?.business_doc}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business Initails :
-                </Typography>
-                <Typography>{businessItemData && businessItemData?.business_initial}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Contact Number :
-                </Typography>
-                <Typography>{businessItemData && businessItemData?.contact_number}</Typography>
-              </div>
+        <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          <Grid container spacing={5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business Name'
+                fullWidth
+                defaultValue={businessItemData?.name || ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Meta Id'
+                fullWidth
+                defaultValue={businessItemData?.business_id || ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            {/* <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business Initial'
+                fullWidth
+                defaultValue={businessItemData?.business_initial || ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid> */}
+            <Grid item xs={12}>
+              <CustomTextField
+                label='Description'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.business_desc || ''}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Currency'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.currency?.label || ''}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business Type'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.business_type || ''}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Address'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.business_address || ''}
+              />
+            </Grid>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business Address:
-                </Typography>
-                <Typography color='text.primary'>{businessItemData && businessItemData.business_address}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business Description:
-                </Typography>
-                <Typography color='text.primary'>{businessItemData && businessItemData.business_desc}</Typography>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Contact number'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.contact_number || ''}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Document'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={businessItemData?.business_doc || ''}
+              />
+            </Grid>
+            {businessItemData?.logo && (
+              <Grid item xs={12} sm={6}>
+                <CustomTextField
+                  label='Business Logo'
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  defaultValue={businessItemData?.logo || ''}
+                />
+              </Grid>
+            )}
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

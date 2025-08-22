@@ -6,29 +6,25 @@ import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
 import { useForm } from 'react-hook-form'
-
 import CustomTextField from '@/@core/components/mui/TextField'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
-
-import { FeedWhatsApp } from '@/api/whatsapp'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
-
 import FormHelperText from '@mui/material/FormHelperText'
 import FormControl from '@mui/material/FormControl'
-import { BusinessType } from '@/types/apps/businessTypes'
 import { getAllBusiness } from '@/api/business'
 import MenuItem from '@mui/material/MenuItem'
 import { getFeedToChatGpt } from '@/api/feedToChatGPT'
 import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { TelegramDataType } from '@/api/interface/telegramInterface'
 import { TeleGram } from '@/api/telegram'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
+import { BusinessType } from '@/api/interface/businessInterface'
 
 const TelegramCard = () => {
   const [loading, setLoading] = useState<boolean>(false)
@@ -36,28 +32,26 @@ const TelegramCard = () => {
   const [feedToGptData, setFeedToGptData] = useState<FeedToChatGptType[]>([])
 
   const router = useRouter()
-  const { lang: locale } = useParams()
+  const { lang: locale } = useParams() as { lang: Locale }
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
-    control
+    reset
   } = useForm<TelegramDataType>()
 
   useEffect(() => {
     const fetchBusiness = async () => {
       try {
+        setLoading(true)
         const response = await getAllBusiness()
-
-        // console.log(response?.data?.results, 'All Business Data')
-
+        setLoading(false)
         setUserBusinessData(response?.data?.results || [])
       } catch (err: any) {
         // setError(err.message || 'Failed to fetch business')
       } finally {
-        // setLoading(false)
+        setLoading(false)
       }
     }
 
@@ -68,8 +62,6 @@ const TelegramCard = () => {
     const fetchFeedToChatGpt = async () => {
       try {
         const response = await getFeedToChatGpt()
-
-        // console.log(response?.data?.results, 'All getFeedToChatGpt Data')
 
         setFeedToGptData(response?.data?.results || [])
       } catch (err: any) {
@@ -82,18 +74,13 @@ const TelegramCard = () => {
     fetchFeedToChatGpt()
   }, [])
 
-  //
-
   const onSubmit = (data: TelegramDataType, e: any) => {
     e.preventDefault()
     setLoading(true)
-    // console.log(data, 'data')
 
     TeleGram(data)
       .then(res => {
-        // console.log(res, 'create FeedWhatsApp')
         toast.success('Telegram created successfully')
-        // router.replace('/home')
         router.replace(getLocalizedUrl('/account-settings', locale as Locale))
       })
       .catch(error => {
@@ -101,7 +88,7 @@ const TelegramCard = () => {
       })
       .finally(() => {
         setLoading(false)
-        reset() // Reset the form after submission
+        reset()
       })
   }
 
@@ -152,13 +139,6 @@ const TelegramCard = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                {/* <CustomTextField
-                  label='Feed to GPT'
-                  fullWidth
-                  {...register('feed_to_gpt', { required: 'Feed to GPT is required' })}
-                  error={!!errors.feed_to_gpt}
-                  helperText={errors.feed_to_gpt?.message}
-                /> */}
                 <CustomTextField
                   select
                   fullWidth
@@ -176,8 +156,7 @@ const TelegramCard = () => {
                     ))}
                 </CustomTextField>
               </Grid>
-              {/* business */}
-              {/* name */}
+
               <Grid item xs={12} sm={6} style={{ marginTop: '20px' }}>
                 <FormControl error={!!errors.active}>
                   <FormControlLabel
@@ -198,7 +177,6 @@ const TelegramCard = () => {
           </CardContent>
         </Card>
       </form>
-      <Toaster />
     </>
   )
 }

@@ -1,13 +1,14 @@
 import axios, { AxiosError } from 'axios'
 import { getBaseUrl } from './vars/vars'
+import { getSession } from 'next-auth/react'
 
 const API_URL = getBaseUrl()
 
 export const GET = async (endpoint: string) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
 
-  if (!auth_token) {
-    console.error('No auth token found')
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
     throw new Error('Authentication token not available')
   }
 
@@ -16,7 +17,7 @@ export const GET = async (endpoint: string) => {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
 
@@ -25,8 +26,6 @@ export const GET = async (endpoint: string) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      // Handle client-side redirect
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -39,31 +38,29 @@ export const GET = async (endpoint: string) => {
 }
 
 export const GETBYID = async (endpoint: string, id: string | number) => {
-  const auth_token = localStorage.getItem('auth_token')
-  // console.log(auth_token, 'auth_token -- GetById')
+  const session = await getSession()
+  console.log(session, 'session0-------------')
 
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
   try {
-    // const parsedToken = JSON.parse(auth_token)
-    // Construct the endpoint with the provided ID
     const url = `${API_URL}${endpoint}/${id}/`
-    // console.log(url, 'url -- GetById')
 
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
-    // console.log(response, 'response -- GetById')
 
     return response
   } catch (error) {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      // Handle client-side redirect
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -76,33 +73,29 @@ export const GETBYID = async (endpoint: string, id: string | number) => {
 }
 
 export const SEARCHBYPARAMSPAGINATION = async (endpoint: string, params: any) => {
-  console.log(params, 'params--------')
+  const session = await getSession()
 
-  const auth_token = localStorage.getItem('auth_token')
-  // console.log(auth_token, 'auth_token -- GetById')
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
-    // const parsedToken = JSON.parse(auth_token)
-    // Construct the endpoint with the provided ID
     const url = `${API_URL}${endpoint}/?page=${params?.page_size}`
-    // console.log(url, 'url -- GetById')
 
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
-    // console.log(response, 'response -- GetById')
 
     return response
   } catch (error) {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      // Handle client-side redirect
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -115,31 +108,28 @@ export const SEARCHBYPARAMSPAGINATION = async (endpoint: string, params: any) =>
 }
 
 export const SEARCHBYPARAMS = async (endpoint: string, params: any) => {
-  const auth_token = localStorage.getItem('auth_token')
-  // console.log(auth_token, 'auth_token -- GetById')
+  const session = await getSession()
 
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
   try {
-    // const parsedToken = JSON.parse(auth_token)
-    // Construct the endpoint with the provided ID
     const url = `${API_URL}${endpoint}/?search=${params}`
-    // console.log(url, 'url -- GetById')
 
     const response = await axios.get(url, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
-    // console.log(response, 'response -- GetById')
 
     return response
   } catch (error) {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      // Handle client-side redirect
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -152,7 +142,12 @@ export const SEARCHBYPARAMS = async (endpoint: string, params: any) => {
 }
 
 export const SEARCHBYIDPARAMS = async (endpoint: string, params: any) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const url = `${API_URL}${endpoint}/?business_id=${params}`
@@ -161,7 +156,7 @@ export const SEARCHBYIDPARAMS = async (endpoint: string, params: any) => {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
 
@@ -170,7 +165,6 @@ export const SEARCHBYIDPARAMS = async (endpoint: string, params: any) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -182,7 +176,12 @@ export const SEARCHBYIDPARAMS = async (endpoint: string, params: any) => {
   }
 }
 export const SEARCHBYCONTACTPARAMS = async (endpoint: string, params: any) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const url = `${API_URL}${endpoint}/?number=${params}`
@@ -191,7 +190,7 @@ export const SEARCHBYCONTACTPARAMS = async (endpoint: string, params: any) => {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       },
       responseType: 'blob'
     })
@@ -201,7 +200,6 @@ export const SEARCHBYCONTACTPARAMS = async (endpoint: string, params: any) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -214,7 +212,12 @@ export const SEARCHBYCONTACTPARAMS = async (endpoint: string, params: any) => {
 }
 
 export const DELETE = async (endpoint: string, id: string | number) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const url = `${API_URL}${endpoint}/${id}/`
@@ -223,7 +226,7 @@ export const DELETE = async (endpoint: string, id: string | number) => {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${auth_token}`
+        Authorization: `Token ${session?.accessToken}`
       }
     })
 
@@ -232,7 +235,6 @@ export const DELETE = async (endpoint: string, id: string | number) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -261,13 +263,18 @@ export const GETNOAUTH = async (endpoint: string) => {
 }
 
 export const POST = async (endpoint: string, data: any) => {
-  const token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const headers = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: `Token ${token}`
+      Authorization: `Token ${session?.accessToken}`
     }
 
     const response = await axios.post(`${API_URL}${endpoint}`, data, { headers })
@@ -277,7 +284,6 @@ export const POST = async (endpoint: string, data: any) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      localStorage.removeItem('auth_token')
       window.location.href = 'en/login'
 
       console.error('Invalid or expired token')
@@ -289,13 +295,18 @@ export const POST = async (endpoint: string, data: any) => {
   }
 }
 export const POSTFILE = async (endpoint: string, data: any) => {
-  const token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const headers = {
       'Content-Type': 'multipart/form-data',
       Accept: 'application/json',
-      Authorization: `Token ${token}`
+      Authorization: `Token ${session?.accessToken}`
     }
 
     const response = await axios.post(`${API_URL}${endpoint}`, data, { headers })
@@ -305,7 +316,6 @@ export const POSTFILE = async (endpoint: string, data: any) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -333,13 +343,18 @@ export const POSTNOAUTH = async (endpoint: string, data: any) => {
 }
 
 export const PUT = async (endpoint: string, data: any) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const headers = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: `Token ${auth_token}`
+      Authorization: `Token ${session?.accessToken}`
     }
 
     const response = await axios.put(`${API_URL}${endpoint}`, data, { headers })
@@ -348,8 +363,6 @@ export const PUT = async (endpoint: string, data: any) => {
     const axiosError = error as AxiosError
 
     if (axiosError.response?.status === 401) {
-      // Handle client-side redirect
-      localStorage.removeItem('auth_token')
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')
@@ -362,13 +375,18 @@ export const PUT = async (endpoint: string, data: any) => {
 }
 
 export const PATCH = async (endpoint: string, data: any) => {
-  const auth_token = localStorage.getItem('auth_token')
+  const session = await getSession()
+
+  if (!session || !session?.user || !session?.accessToken) {
+    console.error('No valid session or auth token found')
+    throw new Error('Authentication token not available')
+  }
 
   try {
     const headers = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      Authorization: `Token ${auth_token}`
+      Authorization: `Token ${session?.accessToken}`
     }
 
     const response = await axios.patch(`${API_URL}${endpoint}`, data, { headers })
@@ -378,7 +396,7 @@ export const PATCH = async (endpoint: string, data: any) => {
 
     if (axiosError.response?.status === 401) {
       // Handle client-side redirect
-      localStorage.removeItem('auth_token')
+
       window.location.href = '/en/login'
 
       console.error('Invalid or expired token')

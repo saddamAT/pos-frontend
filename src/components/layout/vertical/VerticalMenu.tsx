@@ -8,6 +8,7 @@ import { useTheme } from '@mui/material/styles'
 
 // Third-party Imports
 import PerfectScrollbar from 'react-perfect-scrollbar'
+import { Locale } from '@/configs/i18n'
 
 // Type Imports
 import type { getDictionary } from '@/utils/getDictionary'
@@ -27,9 +28,7 @@ import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNav
 import menuItemStyles from '@core/styles/vertical/menuItemStyles'
 import menuSectionStyles from '@core/styles/vertical/menuSectionStyles'
 import { useAuthStore } from '@/store/authStore'
-
-// Menu Data Imports
-// import menuData from '@/data/navigation/verticalMenuData'
+import { useSession } from 'next-auth/react'
 
 type RenderExpandIconProps = {
   open?: boolean
@@ -49,8 +48,7 @@ const RenderExpandIcon = ({ open, transitionDuration }: RenderExpandIconProps) =
 
 const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const { user } = useAuthStore()
-  // console.log(user?.user_type, 'user_type')
-  // Hooks
+
   const theme = useTheme()
   const verticalNavOptions = useVerticalNav()
   const { settings } = useSettings()
@@ -59,7 +57,10 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
 
   // Vars
   const { transitionDuration } = verticalNavOptions
-  const { lang: locale, id } = params
+  const { lang: locale } = useParams() as { lang: Locale }
+
+  const { data } = useSession()
+  // console.log(data, 'data')
 
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
@@ -86,55 +87,54 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         renderExpandedMenuItemIcon={{ icon: <i className='tabler-circle text-xs' /> }}
         menuSectionStyles={menuSectionStyles(verticalNavOptions, theme)}
       >
-        {/* label={dictionary['navigation'].appsPages} */}
         <MenuSection label=''>
-          {/* <SubMenu label={dictionary['navigation'].wizardExamples} icon={<i className='tabler-dots' />}>
-            <MenuItem href={`/${locale}/pages/wizard-examples/checkout`}>{dictionary['navigation'].checkout}</MenuItem>
-            <MenuItem href={`/${locale}/pages/wizard-examples/property-listing`}>
-              {dictionary['navigation'].propertyListing}
-            </MenuItem>
-            <MenuItem href={`/${locale}/pages/wizard-examples/create-deal`}>
-              {dictionary['navigation'].createDeal}
-            </MenuItem>
-          </SubMenu> */}
           <MenuItem href={`/${locale}/home`} icon={<i className='tabler-smart-home' />}>
             {dictionary['navigation'].home}
           </MenuItem>
-          {/* <MenuItem href={`/${locale}/plans`} icon={<i className='tabler-currency-dollar text-[22px]' />}>
-            {dictionary['navigation'].plans}
-          </MenuItem> */}
-          {/* {user?.user_type === 'admin' && (
+
+          {['superadmin', 'admin'].includes(data?.user?.user_type ?? '') && (
             <MenuItem href={`/${locale}/users`} icon={<i className='tabler-user' />}>
-              {dictionary['navigation'].users}
-            </MenuItem>
-          )} */}
-          {Number(user?.user_type) === 1 && (
-            <MenuItem href={`/${locale}/users`} icon={<i className='tabler-user' />}>
-              {dictionary['navigation'].users}
+              {dictionary.navigation.users}
             </MenuItem>
           )}
 
-          <MenuItem href={`/${locale}/business`} icon={<i className='tabler-chart-bar' />}>
-            {dictionary['navigation'].business}
-          </MenuItem>
+          {data?.user?.user_type === 'superadmin' && (
+            <MenuItem href={`/${locale}/business`} icon={<i className='tabler-chart-bar' />}>
+              {dictionary['navigation'].business}
+            </MenuItem>
+          )}
+          {data?.user?.user_type?.toLowerCase() !== 'cashier' && data?.user?.user_type?.toLowerCase() !== 'manager' && (
+            <MenuItem href={`/${locale}/outlets`} icon={<i className='tabler-box text-[26px]' />}>
+              {dictionary['navigation'].outlet}
+            </MenuItem>
+          )}
 
-          <MenuItem href={`/${locale}/resturants`} icon={<i className='tabler-box text-[26px]' />}>
-            {dictionary['navigation'].outlet}
-          </MenuItem>
-          <MenuItem href={`/${locale}/menu`} icon={<i className='tabler-list-search' />}>
+          <MenuItem href={`/${locale}/products`} icon={<i className='tabler-list-search' />}>
             {dictionary['navigation'].products}
           </MenuItem>
 
           <MenuItem href={`/${locale}/orders`} icon={<i className='tabler-shopping-cart' />}>
             {dictionary['navigation'].orders}
           </MenuItem>
-          <MenuItem href={`/${locale}/returns`} icon={<i className='tabler-refresh text-textPrimary' />}>
-            {dictionary['navigation'].returns}
+          {data?.user?.user_type?.toLowerCase() !== 'cashier' && (
+            <MenuItem href={`/${locale}/returns`} icon={<i className='tabler-refresh text-textPrimary' />}>
+              {dictionary['navigation'].returns}
+            </MenuItem>
+          )}
+
+          <MenuItem href={`/${locale}/wa-templates`} icon={<i className='tabler-link text-lg' />}>
+            {dictionary['navigation'].templates}
           </MenuItem>
 
-          <MenuItem href={`/${locale}/account-settings`} icon={<i className='tabler-settings' />}>
-            {dictionary['navigation'].settings}
-          </MenuItem>
+          <SubMenu label={dictionary['navigation'].settings} icon={<i className='tabler-settings' />}>
+            <MenuItem href={`/${locale}/account-settings`}>{dictionary['navigation'].accountSettings}</MenuItem>
+            <MenuItem href={`/${locale}/pricing`}>{dictionary['navigation'].pricing}</MenuItem>
+            <MenuItem href={`/${locale}/invitation`}>{dictionary['navigation'].invitation}</MenuItem>
+            <MenuItem href={`/${locale}/billing-plans`}>{dictionary['navigation'].billingAndPlans}</MenuItem>
+            <MenuItem href={`/${locale}/notifications`}>{dictionary['navigation'].Notifications}</MenuItem>
+            <MenuItem href={`/${locale}/platforms`}>{dictionary['navigation'].Platforms}</MenuItem>
+            <MenuItem href={`/${locale}/postal-code`}>{dictionary['navigation'].PostalCodes}</MenuItem>
+          </SubMenu>
         </MenuSection>
       </Menu>
     </ScrollWrapper>

@@ -3,6 +3,28 @@ import { GET, POST, DELETE, PUT, PATCH, GETNOAUTH, POSTNOAUTH, GETBYID } from '.
 import { ENDPOINTS } from './vars/vars'
 import axios from 'axios'
 
+import { apiRequest } from '@/utils/apiRequest'
+
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
+}
+
+const getUserBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/account/${ENDPOINTS.users}`
+}
+
+const getUserTypeBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/account/${ENDPOINTS.userType}`
+}
+
 import type {
   forgotPasswordUserType,
   LoginUser,
@@ -126,19 +148,8 @@ export async function updateUserPassword(data: updateUserPasswordData): Promise<
   }
 }
 
-export async function getAllUsers(): Promise<any> {
-  try {
-    // https://mask-toolbots-fjb0fbbteaf4dcdw.westeurope-01.azurewebsites.net/api/
-    const url = `account/${ENDPOINTS.users}/`
-    const response = await GET(url)
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Get users failed due to unexpected error')
-    }
-  }
+export async function getAllUsers(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBaseUrl()}/`)
 }
 
 export async function getUserTypes(): Promise<any> {
@@ -154,6 +165,10 @@ export async function getUserTypes(): Promise<any> {
       throw new Error('Error in fetching user types')
     }
   }
+}
+
+export async function getUserType(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserTypeBaseUrl()}/`)
 }
 
 export async function getUserByIduy(id: number): Promise<any> {
@@ -216,6 +231,21 @@ export async function updateUser(id: number, data: User): Promise<any> {
       throw error.response
     } else {
       throw new Error('Error in updating User data')
+    }
+  }
+}
+
+export async function getUserBusinessesById(id: number): Promise<any> {
+  try {
+    const url = `whatseat/business/${ENDPOINTS.user}`
+    const response = await GETBYID(url, id)
+
+    return response
+  } catch (error: any) {
+    if (error.response) {
+      throw error.response
+    } else {
+      throw new Error('Error in fetching User data')
     }
   }
 }

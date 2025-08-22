@@ -3,24 +3,9 @@
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
-import Button from '@mui/material/Button'
-import type { ButtonProps } from '@mui/material/Button'
 
-// Type Imports
-import type { ThemeColor } from '@core/types'
-
-// Component Imports
-
-import EditTelegramInfo from '@/components/dialogs/edit-telegram-info'
-import ConfirmationDialog from '@components/dialogs/confirmation-dialog'
-import OpenDialogOnElementClick from '@components/dialogs/OpenDialogOnElementClick'
-import CustomAvatar from '@core/components/mui/Avatar'
 import { useEffect, useState } from 'react'
-
-import { TelegramDataType } from '@/api/interface/telegramInterface'
-import { getTelegramById } from '@/api/telegram'
 import { getUserById } from '@/api/user'
 import { User } from '@/api/interface/userInterface'
 
@@ -37,11 +22,8 @@ const UserDetails = ({ id }: PreviewUserProps) => {
     const fetchUser = async () => {
       try {
         const response = await getUserById(Number(id))
-        // console.log(response?.data, 'response Of Single telegram------')
-        setUserItemData(response?.data)
 
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
+        setUserItemData(response?.data)
       } catch (error: any) {
         // Handle error
       }

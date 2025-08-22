@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
 import Link from 'next/link'
 
 import { useParams, useRouter } from 'next/navigation'
 
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 import { useForm } from 'react-hook-form'
 
@@ -87,12 +87,9 @@ const Register = ({ mode }: { mode: SystemMode }) => {
     formState: { errors }
   } = useForm<User>()
 
-  const [open, setOpen] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [isChecked, setIsChecked] = useState<boolean>(false)
-  const [userTypes, setUserTypes] = useState<UserRole[]>([])
 
-  const handleClose = () => setOpen(false)
   const [isPasswordShown, setIsPasswordShown] = useState(false)
 
   // Hooks
@@ -109,24 +106,6 @@ const Register = ({ mode }: { mode: SystemMode }) => {
     borderedDarkIllustration
   )
 
-  useEffect(() => {
-    const fetchUserTypes = async () => {
-      setLoading(true)
-
-      try {
-        const response = await getUserTypes()
-
-        setUserTypes(response?.data || [])
-      } catch (err: any) {
-        // Handle error
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUserTypes()
-  }, [])
-
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
   const onSubmit = (data: User, e: any) => {
@@ -141,18 +120,14 @@ const Register = ({ mode }: { mode: SystemMode }) => {
 
     const submissionData = {
       ...data,
-      status: 'Active'
-      // user_type: 'businessowner'
-      // image: 'http://localhost:8000/documents/adriotlogo.png'
+      status: 'Active',
+      user_type: 4
     }
 
     registerUser(submissionData)
       .then(res => {
-        console.log(res, 'res')
-        toast.success(res?.data?.message, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        // router.replace('/login')
+        toast.success(res?.data?.message)
+
         router.replace(getLocalizedUrl('/login', locale))
       })
       .catch(error => {
@@ -268,22 +243,6 @@ const Register = ({ mode }: { mode: SystemMode }) => {
                   )
                 }}
               />
-              <CustomTextField
-                select
-                fullWidth
-                id='user_type'
-                label='Select user type'
-                inputProps={{ placeholder: 'User', ...register('user_type') }}
-                error={!!errors.user_type}
-                helperText={errors.user_type?.message}
-              >
-                {userTypes &&
-                  userTypes?.map(user => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.type}
-                    </MenuItem>
-                  ))}
-              </CustomTextField>
 
               <CustomTextField
                 autoFocus
@@ -343,7 +302,6 @@ const Register = ({ mode }: { mode: SystemMode }) => {
                 </Link>
               </div>
             </form>
-            <Toaster />
           </div>
         </div>
       </div>

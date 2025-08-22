@@ -1,19 +1,16 @@
 // MUI Imports
 'use client'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Divider from '@mui/material/Divider'
-import Button from '@mui/material/Button'
-import type { ButtonProps } from '@mui/material/Button'
 
-// Type Imports
-import type { ThemeColor } from '@core/types'
 import { useEffect, useState } from 'react'
-
+import Grid from '@mui/material/Grid'
+import { useParams, useRouter } from 'next/navigation'
+import CustomTextField from '@core/components/mui/TextField'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { Locale } from '@/configs/i18n'
 import { ChatGptType } from '@/api/interface/interfaceChatGPT'
 import { getChatGptById } from '@/api/chatGpt'
+import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewChatGptProps = {
   id: string
@@ -22,21 +19,21 @@ type PreviewChatGptProps = {
 // MenuDataType
 const ChatGptDetails = ({ id }: PreviewChatGptProps) => {
   const [chatGptItemData, setChatGptItemData] = useState<ChatGptType | null>(null)
-  // Vars
-  const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
-    children,
-    color,
-    variant
-  })
+  const { lang: locale } = useParams() as { lang: Locale }
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
+
+  const handleClose = () => {
+    setOpen(false)
+    router.push(getLocalizedUrl('/platforms', locale as Locale))
+  }
 
   useEffect(() => {
     const fetchChatGpt = async () => {
       try {
         const response = await getChatGptById(Number(id))
-        console.log(response?.data, 'response Of ChatGpt------')
+
         setChatGptItemData(response?.data)
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
       } catch (error: any) {
         console.log(error, 'error')
 
@@ -48,39 +45,52 @@ const ChatGptDetails = ({ id }: PreviewChatGptProps) => {
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div>
-            <Typography variant='h5'>Feed to gpt Details</Typography>
-            <Divider className='mlb-4' />
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business
-                </Typography>
-                <Typography>{chatGptItemData && chatGptItemData.business}</Typography>
-              </div>
+      <Dialog open={open} scroll='body' onClose={handleClose} sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+        <DialogCloseButton onClick={handleClose} disableRipple>
+          <i className='tabler-x' />
+        </DialogCloseButton>
+        <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-11 sm:pbe-4 sm:pli-11'>
+          ChatGpt Details
+        </DialogTitle>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'></Typography>
-                <Typography>{chatGptItemData && chatGptItemData.gpt_api_key}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Status
-                </Typography>
-                {/* <Typography color='text.primary'>{chatGptItemData && chatGptItemData.api_url}</Typography> */}
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Description
-                </Typography>
-                <Typography color='text.primary'>{chatGptItemData && chatGptItemData.desc}</Typography>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          <Grid container spacing={5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business'
+                fullWidth
+                defaultValue={chatGptItemData && chatGptItemData?.business}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='GPT Api Key'
+                fullWidth
+                defaultValue={chatGptItemData && chatGptItemData?.gpt_api_key}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Description'
+                fullWidth
+                defaultValue={chatGptItemData && chatGptItemData?.desc}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Status'
+                fullWidth
+                defaultValue={chatGptItemData && chatGptItemData?.active ? 'active' : ''}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

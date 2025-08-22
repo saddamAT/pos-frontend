@@ -50,9 +50,9 @@ export type Config = {
 }
 
 const themeConfig: Config = {
-  templateName: 'Sharjah 👠',
+  templateName: 'POS',
   homePageUrl: '/home',
-  settingsCookieName: 'Sharjah Shoes Dashboard',
+  settingsCookieName: 'POS Dashboard',
   mode: 'system', // 'system', 'light', 'dark'
   skin: 'default', // 'default', 'bordered'
   semiDark: false, // true, false

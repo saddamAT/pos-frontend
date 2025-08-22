@@ -20,14 +20,12 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
-import toast, { Toaster } from 'react-hot-toast'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 import { getLocalizedUrl } from '@/utils/i18n'
 import type { Locale } from '@configs/i18n'
-
-import { useAuthStore } from '@/store/authStore'
+import { signOut, useSession } from 'next-auth/react'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -45,25 +43,16 @@ const UserDropdown = () => {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { settings } = useSettings()
-  const { lang: locale } = useParams()
 
-  const { user, token, clearAuth } = useAuthStore()
-  // console.log(token, 'token')
-  let auth_token = null
+  const { lang: locale } = useParams() as { lang: Locale }
 
-  if (typeof window !== 'undefined') {
-    auth_token = localStorage.getItem('auth_token')
+  const { data } = useSession()
+
+  const auth_token = data?.accessToken
+
+  if (data && !auth_token) {
+    router.replace(getLocalizedUrl('/login', locale as Locale))
   }
-  // const auth_token = localStorage.getItem('auth_token')
-  // console.log('irere----5555-------', token, auth_token)
-  if (!auth_token) {
-    // If no token is found, redirect to the login page
-    // router.push('/login')
-    router.push(getLocalizedUrl('/login', locale as Locale))
-  }
-
-  // console.log(user, 'latest user')
-  // console.log(token, 'latest token')
 
   // Refs
   const anchorRef = useRef<HTMLDivElement>(null)
@@ -87,40 +76,31 @@ const UserDropdown = () => {
 
   const handleResetPassword = (e: MouseEvent) => {
     e.preventDefault()
-    // router.push('/update-password')
+
     router.push(getLocalizedUrl('/update-password', locale as Locale))
     setOpen(false)
   }
 
   const handleUserProfile = (e: MouseEvent) => {
     e.preventDefault()
-    // router.push('/user-profile')
+
     router.push(getLocalizedUrl('/user-profile', locale as Locale))
     setOpen(false)
   }
 
   const handleLogout = async (e: MouseEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    try {
-      await fetch('/api/logout', { method: 'POST' })
+    // disable redirect
+    const result = await signOut({ redirect: false })
 
-      toast.success('User logged out successfully')
-      router.push(getLocalizedUrl('/login', locale as Locale))
-      localStorage.removeItem('auth_token')
-      clearAuth()
-      setOpen(false)
-    } catch (error) {
-      console.error('Logout failed:', error)
-    } finally {
-      setLoading(false)
-    }
+    // now manually redirect
+    router.replace(getLocalizedUrl('/login', locale as Locale))
   }
 
   const handleAccountSettings = (e: MouseEvent) => {
     e.preventDefault()
-    // router.push('/account-settings')
+
     router.push(getLocalizedUrl('/account-settings', locale as Locale))
     setOpen(false)
   }
@@ -135,7 +115,7 @@ const UserDropdown = () => {
         className='mis-2'
       >
         <Avatar
-          alt={user ? `${user.first_name} ${user.last_name}` : 'User'}
+          alt={data?.user ? `${data?.user.first_name} ${data?.user.last_name}` : 'User'}
           src='/images/avatars/1.png'
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
@@ -155,12 +135,15 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>
-                    <Avatar alt={user ? `${user.first_name} ${user.last_name}` : 'User'} src='/images/avatars/1.png' />
+                    <Avatar
+                      alt={data?.user ? `${data?.user.first_name} ${data?.user.last_name}` : 'User'}
+                      src='/images/avatars/1.png'
+                    />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
-                        {user ? `${user.first_name} ${user.last_name}` : 'Guest User'}
+                        {data?.user ? `${data?.user.first_name} ${data?.user.last_name}` : 'Guest User'}
                       </Typography>
-                      <Typography variant='caption'>{user ? user.email : 'guest@example.com'}</Typography>
+                      <Typography variant='caption'>{data?.user ? data?.user.email : 'guest@example.com'}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />
@@ -204,7 +187,6 @@ const UserDropdown = () => {
           </Fade>
         )}
       </Popper>
-      <Toaster />
     </>
   )
 }
