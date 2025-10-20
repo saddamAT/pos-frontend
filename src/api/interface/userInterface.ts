@@ -89,6 +89,7 @@ export interface UserInvitation {
   expiresAt: string
   status: 'pending' | 'accepted' | 'declined' | 'expired'
   createdAt: string
+  company?: string
   companyDetail?: {
     id: string
     name: string
@@ -101,7 +102,7 @@ export interface UserInvitation {
 }
 
 export interface UserInvitationCreation {
-  id: string
+  id?: string
   email: string
   business: number
   user_type: number
@@ -157,7 +158,7 @@ export interface CreateInvitationRequest {
   email: string
   company?: string
   user_type?: number
-  business?: string
+  business?: number
 }
 
 export interface UserRole {

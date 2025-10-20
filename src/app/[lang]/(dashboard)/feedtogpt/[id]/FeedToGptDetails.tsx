@@ -1,6 +1,6 @@
 // MUI Imports
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Grid from '@mui/material/Grid'
 import { useParams, useRouter } from 'next/navigation'
 import CustomTextField from '@core/components/mui/TextField'
@@ -8,17 +8,15 @@ import CustomTextField from '@core/components/mui/TextField'
 import { Dialog, DialogContent, DialogTitle } from '@mui/material'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
-import { getFeedToGptById } from '@/api/feedToChatGPT'
 import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewWhatsAppProps = {
-  id: string
+  feedToGptItemData: FeedToChatGptType | null
 }
 
 // MenuDataType
-const FeedToGptDetails = ({ id }: PreviewWhatsAppProps) => {
-  const [feedToGptItemData, setFeedToGptItemData] = useState<FeedToChatGptType | null>(null)
+const FeedToGptDetails = ({ feedToGptItemData }: PreviewWhatsAppProps) => {
   const { lang: locale } = useParams() as { lang: Locale }
   const [open, setOpen] = useState(true)
   const router = useRouter()
@@ -27,19 +25,6 @@ const FeedToGptDetails = ({ id }: PreviewWhatsAppProps) => {
     setOpen(false)
     router.push(getLocalizedUrl('/platforms', locale as Locale))
   }
-
-  useEffect(() => {
-    const fetchFeedToGpt = async () => {
-      try {
-        const response = await getFeedToGptById(Number(id))
-
-        setFeedToGptItemData(response?.data)
-      } catch (error: any) {
-        console.log(error, 'error')
-      }
-    }
-    fetchFeedToGpt()
-  }, [id])
 
   return (
     <>

@@ -18,7 +18,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import toast from 'react-hot-toast'
 import { updatePostalCodes } from '@/api/postalCodes'
 import { postalCodesDataType } from '@/api/interface/postalCodesInterface'
-import { MenuItem } from '@mui/material'
+import { ListItemText, MenuItem } from '@mui/material'
 import { BusinessType } from '@/api/interface/businessInterface'
 import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
@@ -27,13 +27,12 @@ type EditPostalCodesInfoProps = {
   setOpen: (open: boolean) => void
   data?: postalCodesDataType
   onTypeAdded?: any
-  mode?: string
+  mode: 'add' | 'edit' | 'view'
   businesses: BusinessType[]
 }
 
 const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesses }: EditPostalCodesInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  console.log(data, 'data')
 
   const {
     register,
@@ -84,9 +83,9 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesse
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Edit Postal Codes Information
+        {mode === 'edit' ? 'Edit Postal Codes Information' : 'Postal Codes Details'}
         <Typography component='span' className='flex flex-col text-center'>
-          Updating Postal Codes details will receive a privacy audit.
+          {mode === 'edit' && 'Updating Postal Codes details will receive a privacy audit'}
         </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -94,21 +93,26 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesse
           <Grid container spacing={5}>
             <Grid item xs={12} sm={6}>
               <CustomTextField
-                select
+                select={mode === 'edit'}
                 fullWidth
                 id='business'
                 label='Select Business'
                 defaultValue={data?.business || ''}
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{ placeholder: 'Business', ...register('business'), readOnly: mode === 'view' }}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {businesses &&
-                  businesses?.map(business => (
+                {businesses.length > 0 ? (
+                  businesses.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
-                  ))}
+                  ))
+                ) : (
+                  <MenuItem disabled>
+                    <ListItemText primary='No business found' />
+                  </MenuItem>
+                )}
               </CustomTextField>
             </Grid>
 
@@ -122,6 +126,9 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesse
                 })}
                 error={!!errors.code}
                 helperText={errors.code?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -132,14 +139,20 @@ const EditPostalCodesInfo = ({ open, setOpen, data, onTypeAdded, mode, businesse
                 {...register('city', {
                   required: 'city is required'
                 })}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-          <Button variant='contained' type='submit'>
-            Submit
-          </Button>
+          {mode === 'edit' && (
+            <Button variant='contained' type='submit'>
+              Submit
+            </Button>
+          )}
+
           <Button variant='tonal' color='secondary' type='reset' onClick={handleClose}>
             Cancel
           </Button>

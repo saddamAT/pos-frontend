@@ -9,8 +9,7 @@ import CustomTextField from '@core/components/mui/TextField'
 import { useForm } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Loader from '@/components/loader/Loader'
-import { createToppings, getTopping } from '@/api/toppings'
-import { getAllBusiness } from '@/api/business'
+import { createToppings } from '@/api/toppings'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
 import type { ButtonProps } from '@mui/material/Button'
 import type { ThemeColor } from '@core/types'
@@ -18,6 +17,8 @@ import AddType from '@/components/dialogs/add-type'
 import { getAllFoodTypesOfSpecificBusiness } from '@/api/foodTypes'
 import { ToppingDataType } from '@/api/interface/toppingInterface'
 import { BusinessType } from '@/api/interface/businessInterface'
+import { ListItemText } from '@mui/material'
+import { useAuthStore } from '@/store/authStore'
 
 type PreviewToppingsProps = {
   id: string
@@ -30,15 +31,12 @@ const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['
   variant
 })
 
-// MenuDataType
-
 const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) => {
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
-  const [BusinessToppingsData, setBusinessToppingsData] = useState<ToppingDataType[]>([])
   const [FoodTypeData, setFoodTypeData] = useState<ToppingDataType[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [addType, setAddType] = useState<boolean>(false)
   const [businessId, setBusinessId] = useState<string>('')
+  const { businessData } = useAuthStore()
 
   const {
     register,
@@ -50,7 +48,8 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
 
   const handleBusinessChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedBusinessId = Number(event.target.value)
-    const selectedBusiness = userBusinessData.find(b => b.id === selectedBusinessId)
+    // const selectedBusiness = businessData.find(b => b.id === selectedBusinessId)
+    const selectedBusiness = businessData.find((b: BusinessType) => b.id === selectedBusinessId)
 
     if (selectedBusiness) {
       setBusinessId(selectedBusiness.business_id)
@@ -59,7 +58,7 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
     }
   }
 
-  const onSubmit = (data: ToppingDataType, e: any) => {
+  const onSubmitTopping = (data: ToppingDataType, e: any) => {
     e.preventDefault()
     onCreateTopping(false)
     setLoading(true)
@@ -99,35 +98,6 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
     fetchFoodTypes()
   }, [id, addType, businessId])
 
-  //
-  const fetchTopping = async () => {
-    try {
-      const response = await getTopping(Number(id))
-
-      setBusinessToppingsData(response?.data)
-    } catch (error: any) {
-      // Handle error
-    }
-  }
-  useEffect(() => {
-    fetchTopping()
-  }, [id, addType])
-
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        const response = await getAllBusiness()
-
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        // setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
   const handleTypeAdded = async () => {
     try {
       const response = await getAllFoodTypesOfSpecificBusiness(businessId)
@@ -151,7 +121,7 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
   return (
     <>
       <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6'>
+        <form onSubmit={e => e.preventDefault()} className='flex flex-col gap-6 p-6'>
           <Grid container spacing={5} alignItems='center'>
             <Grid item xs={12} sm={6}>
               <CustomTextField
@@ -185,12 +155,18 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
                 <MenuItem key='Select Business' value={0}>
                   Select Business
                 </MenuItem>
-                {userBusinessData &&
-                  userBusinessData?.map(business => (
+
+                {businessData && businessData.length > 0 ? (
+                  businessData.map((business: BusinessType) => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
-                  ))}
+                  ))
+                ) : (
+                  <MenuItem disabled value=''>
+                    <ListItemText primary='No business found' />
+                  </MenuItem>
+                )}
               </CustomTextField>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -270,7 +246,7 @@ const AddToppings = ({ id, isCreated, onCreateTopping }: PreviewToppingsProps) =
 
             <Grid item xs={12} sm={6}>
               <div className='flex items-center gap-4' style={{ marginTop: errors.description ? '0px' : '15px' }}>
-                <Button variant='contained' type='submit' disabled={loading}>
+                <Button variant='contained' type='button' onClick={handleSubmit(onSubmitTopping)} disabled={loading}>
                   Save Topping
                 </Button>
               </div>

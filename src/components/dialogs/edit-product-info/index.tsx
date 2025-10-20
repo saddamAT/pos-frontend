@@ -23,6 +23,7 @@ import toast from 'react-hot-toast'
 import { getAllBusiness } from '@/api/business'
 import { BusinessType } from '@/api/interface/businessInterface'
 import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
+import { ListItemText } from '@mui/material'
 
 type EditMenuInfoProps = {
   open: boolean
@@ -30,7 +31,7 @@ type EditMenuInfoProps = {
   data?: MenuDataType
   businesses: BusinessType[]
   onTypeAdded?: any
-  mode?: string
+  mode: 'add' | 'edit' | 'view'
 }
 
 const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: EditMenuInfoProps) => {
@@ -65,7 +66,7 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
     if (!payloadData) return
     try {
       const res = await updateMenu(payloadData.id, payloadData)
-      toast.success('Menu Updated Successfully', {
+      toast.success('Product Updated Successfully', {
         duration: 5000 // Duration in milliseconds (5 seconds)
       })
       if (onTypeAdded) {
@@ -94,9 +95,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Edit Product Information
+        {mode === 'edit' ? 'Edit Product Information' : 'Product Details'}
         <Typography component='span' className='flex flex-col text-center'>
-          Updating Product details will receive a privacy audit.
+          {mode === 'edit' && 'Updating Product details will receive a privacy audit.'}
         </Typography>
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -112,6 +113,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 })}
                 error={!!errors.title}
                 helperText={errors.title?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
@@ -123,6 +127,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 {...register('description', {
                   required: 'Description is required'
                 })}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -131,8 +138,8 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 label='Type'
                 defaultValue={data?.type?.name || ''}
                 inputProps={{
-                  placeholder: 'Menu Type',
-                  readOnly: true
+                  placeholder: 'Product Type',
+                  readOnly: mode === 'view'
                 }}
               />
             </Grid>
@@ -151,6 +158,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 })}
                 error={!!errors.sku}
                 helperText={errors.sku?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
@@ -160,17 +170,22 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 fullWidth
                 id='business'
                 label='Business'
-                inputProps={{ placeholder: 'Business', ...register('business') }}
+                inputProps={{ placeholder: 'Business', ...register('business'), readOnly: mode === 'view' }}
                 defaultValue={data?.business || ''}
                 error={!!errors.business}
                 helperText={errors.business?.message}
               >
-                {businesses &&
-                  businesses?.map(business => (
+                {businesses.length > 0 ? (
+                  businesses.map(business => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>
-                  ))}
+                  ))
+                ) : (
+                  <MenuItem disabled>
+                    <ListItemText primary='No business found' />
+                  </MenuItem>
+                )}
               </CustomTextField>
             </Grid>
 
@@ -183,6 +198,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 {...register('brand', { required: 'Brand is required ' })}
                 error={!!errors.brand}
                 helperText={errors.brand?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
@@ -195,6 +213,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 {...register('status', { required: 'Status is required' })}
                 error={!!errors.status}
                 helperText={errors.status?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               >
                 <MenuItem value='' disabled>
                   Status
@@ -212,6 +233,9 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 {...register('image_link', { required: 'Image link is required' })}
                 error={!!errors.image_link}
                 helperText={errors.image_link?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -223,42 +247,54 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
                 {...register('image_link', { required: 'link is required' })}
                 error={!!errors.image_link}
                 helperText={errors.image_link?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <CustomTextField
-                label='Price(currency symbol)'
+                label='Purcahse Price'
                 fullWidth
-                placeholder='Enter  price '
+                placeholder='Enter Purchase price '
                 defaultValue={data?.price || ''}
                 {...register('price', {
-                  required: 'Price is required'
+                  required: 'Purcahse Price is required'
                 })}
                 error={!!errors.price}
                 helperText={errors.price?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <CustomTextField
-                label='Purchase Price *'
+                label='Sale Price *'
                 type='number'
                 fullWidth
-                placeholder='Enter Purchase  price '
-                {...register('purchase_price', {
-                  required: 'Purchase Price is required'
+                placeholder='Enter Sale  price '
+                {...register('sale_price', {
+                  required: 'Sale Price is required'
                 })}
-                defaultValue={data?.purchase_price || ''}
-                error={!!errors.purchase_price}
-                helperText={errors.purchase_price?.message}
+                defaultValue={data?.sale_price || ''}
+                error={!!errors.sale_price}
+                helperText={errors.sale_price?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-          <Button variant='contained' type='submit'>
-            Submit
-          </Button>
+          {mode === 'edit' && (
+            <Button variant='contained' type='submit'>
+              Submit
+            </Button>
+          )}
+
           <Button variant='tonal' color='secondary' type='reset' onClick={handleClose}>
             Cancel
           </Button>
@@ -269,8 +305,8 @@ const EditProduct = ({ open, setOpen, data, onTypeAdded, mode, businesses }: Edi
           openConfirmation={openConfirmation}
           onClose={() => setOpenConfirmation(false)}
           onConfirm={handleConfirm}
-          title='Edit Menu'
-          description='Are you sure you want to edit this Menu?'
+          title='Edit Product'
+          description='Are you sure you want to edit this product?'
         />
       )}
     </Dialog>

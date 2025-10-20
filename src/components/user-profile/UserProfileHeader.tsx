@@ -6,8 +6,12 @@ import Typography from '@mui/material/Typography'
 
 // Type Imports
 import type { ProfileHeaderType } from '@/types/pages/profileTypes'
+import { useSession } from 'next-auth/react'
 
 const UserProfileHeader = ({ data }: { data?: ProfileHeaderType }) => {
+  const { data: session } = useSession()
+  // console.log(session, 'session')
+
   return (
     <Card>
       <CardMedia image={data?.coverImg} className='bs-[250px]' />
@@ -17,15 +21,19 @@ const UserProfileHeader = ({ data }: { data?: ProfileHeaderType }) => {
         </div>
         <div className='flex is-full justify-start self-end flex-col items-center gap-6 sm-gap-0 sm:flex-row sm:justify-between sm:items-end '>
           <div className='flex flex-col items-center sm:items-start gap-2'>
-            <Typography variant='h4'>{data?.fullName}</Typography>
+            <Typography variant='h4'>
+              {session?.user?.first_name} {session?.user?.last_name}
+            </Typography>
             <div className='flex flex-wrap gap-6 justify-center sm:justify-normal'>
               <div className='flex items-center gap-2'>
                 {data?.designationIcon && <i className={data?.designationIcon} />}
-                <Typography className='font-medium'>{data?.designation}</Typography>
+                <Typography className='font-medium'>{session?.user?.user_type}</Typography>
               </div>
               <div className='flex items-center gap-2'>
                 <i className='tabler-map-pin' />
-                <Typography className='font-medium'>{data?.location}</Typography>
+                <Typography className='font-medium'>
+                  {session?.user?.city} {session?.user?.country}
+                </Typography>
               </div>
               <div className='flex items-center gap-2'>
                 <i className='tabler-calendar' />

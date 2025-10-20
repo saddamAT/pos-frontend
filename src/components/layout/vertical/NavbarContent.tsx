@@ -13,9 +13,11 @@ import LanguageDropdown from '@components/layout/shared/LanguageDropdown'
 // Util Imports
 import { verticalLayoutClasses } from '@layouts/utils/layoutClasses'
 import { useSession } from 'next-auth/react'
+import { Typography } from '@mui/material'
 
 const NavbarContent = () => {
   const session = useSession()
+  const businessLength = session?.data?.user?.userBusinesses
 
   return (
     <div className={classnames(verticalLayoutClasses.navbarContent, 'flex items-center justify-between gap-4 is-full')}>
@@ -25,9 +27,14 @@ const NavbarContent = () => {
       </div>
       <div className='flex items-center'>
         <LanguageDropdown />
-        {(session?.data?.user?.user_type === 'superadmin' || session?.data?.user?.user_type === 'businessowner') && (
+        {businessLength &&
+        businessLength.length > 0 &&
+        (session?.data?.user?.user_type === 'superadmin' || session?.data?.user?.user_type === 'businessowner') ? (
           <UserBusinessDrop />
+        ) : (
+          <Typography>No businesses found</Typography>
         )}
+
         <UserDropdown />
       </div>
     </div>

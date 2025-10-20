@@ -4,8 +4,6 @@
 import { useEffect, useState, useMemo } from 'react'
 
 // Next Imports
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -37,13 +35,10 @@ import CustomTextField from '@core/components/mui/TextField'
 import tableStyles from '@core/styles/table.module.css'
 import { deleteFaceBook, GetFaceBook } from '@/api/facebook'
 import { FaceBookDataType } from '@/api/interface/facebookInterface'
-import AddFaceBookDrawer from '../add/AddFaceBookDrawer'
 import { useAuthStore } from '@/store/authStore'
 import EditFaceBookInfo from '@components/dialogs/edit-facebook-info'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
 import type { ButtonProps } from '@mui/material/Button'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import Loader from '@/components/loader/Loader'
 import { BusinessType } from '@/api/interface/businessInterface'
@@ -110,19 +105,15 @@ const columnHelper = createColumnHelper<FaceBookTypeWithAction>()
 
 const FaceBookListTable = ({
   tableData,
-  businesses,
+  // businesses,
   feedToChatGpt
 }: {
   tableData?: FaceBookDataType[]
-  businesses: BusinessType[]
+  // businesses: BusinessType[]
   feedToChatGpt: FeedToChatGptFileType[]
 }) => {
-  const router = useRouter()
-  const { lang: locale } = useParams() as { lang: Locale }
-
   const [rowSelection, setRowSelection] = useState({})
-  const [addUserOpen, setAddUserOpen] = useState(false)
-  const { facebookAction, facebookData } = useAuthStore()
+  const { facebookAction, facebookData, businessData } = useAuthStore()
   const [data, setData] = useState<FaceBookDataType[]>(tableData || [])
   const [deleteFacebookOpen, setDeleteFacebookOpen] = useState(false)
   const [globalFilter, setGlobalFilter] = useState('')
@@ -145,7 +136,7 @@ const FaceBookListTable = ({
 
   useEffect(() => {
     fetchFaceBook()
-  }, [addUserOpen, deleteFacebookOpen, editFacebookFlag])
+  }, [deleteFacebookOpen, editFacebookFlag])
 
   const handleTypeAdded = () => {
     fetchFaceBook()
@@ -161,6 +152,11 @@ const FaceBookListTable = ({
       })
       .catch(error => {
         console.log(error, 'error in deleting FaceBook')
+        if (error?.data && error?.data?.detail) {
+          toast.error(error?.data?.detail)
+        } else {
+          toast.error('Error in deleting FaceBook')
+        }
       })
   }
 
@@ -194,13 +190,15 @@ const FaceBookListTable = ({
         )
       },
       columnHelper.accessor('id', {
-        header: '#',
+        header: ' #',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/faceBook/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
       columnHelper.accessor('business', {
@@ -261,21 +259,27 @@ const FaceBookListTable = ({
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteFaceBook(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditFaceBookInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: facebookData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businessData,
+                  feedToChatGpt
+                }}
               />
             </div>
-            <div className='flex gap-4 justify-center'>
+
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -284,9 +288,22 @@ const FaceBookListTable = ({
                 dialogProps={{
                   mode: 'edit',
                   data: facebookData.find((item: any) => item.id === row?.original?.id),
-                  businesses,
+                  businesses: businessData,
                   feedToChatGpt
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteFaceBook(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -346,14 +363,17 @@ const FaceBookListTable = ({
               placeholder='Search FaceBook'
               className='is-full sm:is-auto'
             />
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
-              className='is-full sm:is-auto'
-            >
-              Add FaceBook Feed
-            </Button>
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Add FaceBook Feed', variant: 'contained' }}
+              dialog={EditFaceBookInfo}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businesses: businessData,
+                feedToChatGpt
+              }}
+            />
           </div>
         </div>
         <div className='overflow-x-auto'>
@@ -415,14 +435,6 @@ const FaceBookListTable = ({
           }}
         />
       </Card>
-
-      <AddFaceBookDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        businesses={businesses}
-        feedToChatGpt={feedToChatGpt}
-      />
-      {/* {loading && <Loader />} */}
     </>
   )
 }

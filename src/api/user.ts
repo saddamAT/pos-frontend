@@ -18,6 +18,13 @@ const getUserBaseUrl = (): string => {
   return `${apiUrl}/account/${ENDPOINTS.users}`
 }
 
+const getUserBusinessBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/whatseat/business/${ENDPOINTS.user}`
+}
+
 const getUserTypeBaseUrl = (): string => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
 
@@ -205,20 +212,11 @@ export async function deletUser(id: string): Promise<any> {
     }
   }
 }
-export async function getUserById(id: number): Promise<any> {
-  try {
-    const url = `account/${ENDPOINTS.users}`
-    const response = await GETBYID(url, id)
 
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching User data')
-    }
-  }
+export async function getUserById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBaseUrl()}/${id}/`)
 }
+
 export async function updateUser(id: number, data: User): Promise<any> {
   try {
     const url = `account/${ENDPOINTS.users}/${id}/`
@@ -235,17 +233,21 @@ export async function updateUser(id: number, data: User): Promise<any> {
   }
 }
 
-export async function getUserBusinessesById(id: number): Promise<any> {
-  try {
-    const url = `whatseat/business/${ENDPOINTS.user}`
-    const response = await GETBYID(url, id)
-
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching User data')
-    }
-  }
+export async function getUserBusinessesById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBusinessBaseUrl()}/${id}/`)
 }
+
+// export async function getUserBusinessesById(id: number): Promise<any> {
+//   try {
+//     const url = `whatseat/business/${ENDPOINTS.user}`
+//     const response = await GETBYID(url, id)
+
+//     return response
+//   } catch (error: any) {
+//     if (error.response) {
+//       throw error.response
+//     } else {
+//       throw new Error('Error in fetching User data')
+//     }
+//   }
+// }

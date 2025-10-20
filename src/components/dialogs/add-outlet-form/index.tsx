@@ -100,10 +100,9 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
-
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
         Add Outlet Information
-      </DialogTitle>
+      </DialogTitle>{' '}
       <div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
@@ -149,10 +148,10 @@ const AddOutletForm = ({ open, setOpen, onTypeAdded }: AddOutletFormProps) => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Cuisine Type *'
+                  label='Product Type*'
                   fullWidth
-                  placeholder='Enter Cuisine Type'
-                  {...register('cuisine_type', { required: 'Cuisine Type is required' })}
+                  placeholder='Enter Product Type'
+                  {...register('cuisine_type', { required: 'Product Type is required' })}
                   error={!!errors.cuisine_type}
                   helperText={errors.cuisine_type?.message}
                   InputLabelProps={{

@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
-import { InputAdornment, MenuItem } from '@mui/material'
+import { InputAdornment, ListItemText, MenuItem } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import { useForm } from 'react-hook-form'
@@ -126,11 +126,17 @@ const AddFeedToGptDrawer = ({ open, handleClose, businesses }: Props) => {
                       required: 'Business is required'
                     })}
                   >
-                    {businesses?.map(business => (
-                      <MenuItem key={business.id} value={business.id}>
-                        {business.business_id}
+                    {businesses.length > 0 ? (
+                      businesses.map(business => (
+                        <MenuItem key={business.id} value={business.id}>
+                          {business.business_id}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No business found' />
                       </MenuItem>
-                    ))}
+                    )}
                   </CustomTextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>

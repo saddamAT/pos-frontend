@@ -1,7 +1,5 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -40,8 +38,6 @@ import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementCl
 import EditPostalCodesInfo from '@/components/dialogs/edit-postal-codes-info'
 import type { ButtonProps } from '@mui/material/Button'
 import { useAuthStore } from '@/store/authStore'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import Loader from '@/components/loader/Loader'
 import { BusinessType } from '@/api/interface/businessInterface'
@@ -112,8 +108,6 @@ const PostalCodesListTable = ({
   tableData?: postalCodesDataType[]
   businesses: BusinessType[]
 }) => {
-  const router = useRouter()
-  const { lang: locale } = useParams()
   const [rowSelection, setRowSelection] = useState({})
   const [data, setData] = useState<postalCodesDataType[]>(tableData || [])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -195,16 +189,17 @@ const PostalCodesListTable = ({
         )
       },
       columnHelper.accessor('id', {
-        header: '#',
+        header: ' #',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/postal-code/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
-
       columnHelper.accessor('business', {
         header: 'Business',
         cell: ({ row }) => (
@@ -242,21 +237,25 @@ const PostalCodesListTable = ({
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeletePostalCode(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditPostalCodesInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: postalCodesData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businesses
+                }}
               />
             </div>
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -267,6 +266,19 @@ const PostalCodesListTable = ({
                   data: postalCodesData.find((item: any) => item.id === row?.original?.id),
                   businesses: businesses
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeletePostalCode(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>

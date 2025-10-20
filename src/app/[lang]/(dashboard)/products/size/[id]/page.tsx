@@ -19,11 +19,11 @@ type PageProps = {
 }
 
 const SizePreview = ({ params }: PageProps) => {
-  const { data } = useSession()
+  // const { data } = useSession()
 
-  if (!data?.accessToken) {
-    redirect(`/${params?.lang}/login`)
-  }
+  // if (!data?.accessToken) {
+  //   redirect(`/${params?.lang}/login`)
+  // }
   const [isCreated, setIsCreated] = useState<boolean>(false)
   const handleStateChange = (isCreated: boolean): void => {
     setIsCreated(isCreated)

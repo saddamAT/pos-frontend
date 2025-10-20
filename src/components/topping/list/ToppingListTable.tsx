@@ -53,6 +53,7 @@ import { getAllBusiness } from '@/api/business'
 import { BusinessType } from '@/api/interface/businessInterface'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import Loader from '@/components/loader/Loader'
+import { ListItemText } from '@mui/material'
 
 // Extend react-table with custom filter functions
 declare module '@tanstack/table-core' {
@@ -123,13 +124,12 @@ type PreviewProps = {
 
 const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
   const router = useRouter()
-  // const { lang: locale, id: businessParamId } = useParams()
   const { lang: locale } = useParams() as { lang: Locale }
 
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [loading, setLoading] = useState<boolean>(false)
-  const { toppingData, toppingAction } = useAuthStore()
+  const { toppingData, toppingAction, businessData } = useAuthStore()
   const [data, setData] = useState<ToppingDataTypeWithObjects[]>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [editToppingFlag, setEditToppingFlag] = useState(false)
@@ -161,30 +161,13 @@ const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
     // fetchToppings()
   }, [selectedBusinessId, addMenuOpen, deleteToppingOpen, toppingAction, editToppingFlag, isCreated, id])
 
-  useEffect(() => {
-    const fetchBusiness = async () => {
-      try {
-        setLoading(true)
-        const response = await getAllBusiness()
-        setLoading(false)
-        setUserBusinessData(response?.data?.results || [])
-      } catch (err: any) {
-        // setError(err.message || 'Failed to fetch business')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchBusiness()
-  }, [])
-
   const handleBusinessChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // const selectedBusinessId = event.target.value
     const selectedBusinessId = Number(event.target.value)
     setBusinessId(selectedBusinessId)
 
-    const selectedBusiness = userBusinessData.find(b => b.id == selectedBusinessId)
-
+    // const selectedBusiness = businessData.find(b => b.id == selectedBusinessId)
+    const selectedBusiness = businessData.find((b: BusinessType) => b.id === selectedBusinessId)
     if (selectedBusiness) {
       setSelectedBusinessId(selectedBusiness.business_id)
     }
@@ -244,15 +227,16 @@ const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
       columnHelper.accessor('id', {
         header: 'Topping Number',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/products/toppings/details/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >
-            {`${row.original.id}`}
-          </Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
+
       columnHelper.accessor('name', {
         header: 'Name',
         cell: ({ row }) => (
@@ -304,21 +288,23 @@ const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteTopping(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditToppingInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: toppingData.find((item: any) => item.id === row?.original?.id)
+                }}
               />
             </div>
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -328,6 +314,19 @@ const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
                   mode: 'edit',
                   data: toppingData.find((item: any) => item.id === row.original.id)
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteTopping(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -391,11 +390,17 @@ const ToppingListTable = ({ isCreated, id }: PreviewProps) => {
             onChange={handleBusinessChange}
             // defaultValue={businessId || ''}
           >
-            {userBusinessData.map(business => (
-              <MenuItem key={business.id} value={business.id}>
-                {business.business_id}
+            {businessData && businessData.length > 0 ? (
+              businessData.map((business: BusinessType) => (
+                <MenuItem key={business.id} value={business.id}>
+                  {business.business_id}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem disabled value=''>
+                <ListItemText primary='No business found' />
               </MenuItem>
-            ))}
+            )}
           </CustomTextField>
         </div>
 

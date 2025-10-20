@@ -2,6 +2,21 @@ import { ENDPOINTS } from './vars/vars'
 import { GET, PATCH, POST, DELETE, SEARCHBYIDPARAMS, GETBYID } from './api'
 import { SizeDataType, SizeDataTypeWithoutId } from './interface/sizeInterface'
 
+import { apiRequest } from '@/utils/apiRequest'
+
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
+}
+
+const getSizeBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/whatseat/${ENDPOINTS.sizes}`
+}
+
 export async function getAllSizes(): Promise<any> {
   try {
     const url = `whatseat/${ENDPOINTS.sizes}/`
@@ -62,19 +77,8 @@ export async function getBusinessMenuesById(params: any): Promise<any> {
   }
 }
 
-export async function getMenuSizeById(id: number): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.sizes}`
-    const response = await GETBYID(url, id)
-
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching  menue size data')
-    }
-  }
+export async function getMenuSizeById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getSizeBaseUrl()}/${id}/`)
 }
 
 export async function updateMenuSize(id: number, data: SizeDataType): Promise<any> {

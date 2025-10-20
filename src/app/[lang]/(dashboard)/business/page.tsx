@@ -16,6 +16,9 @@ export const metadata: Metadata = {
 
 const BusinessPage = async ({ params }: Props) => {
   const session = await getServerSession(authOptions)
+  // console.log(session, 'session---9899')
+
+  const loggedInUserId: number = session?.user?.id ?? 0
 
   // Redirect to login if not authenticated
   if (!session?.accessToken) {
@@ -27,7 +30,7 @@ const BusinessPage = async ({ params }: Props) => {
   if (userType !== 'superadmin') {
     redirect(`/${params.lang}/home`)
   }
-  return <BusinessList />
+  return <BusinessList loggedInUserId={loggedInUserId} />
 }
 
 export default BusinessPage

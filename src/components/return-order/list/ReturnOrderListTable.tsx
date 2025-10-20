@@ -198,9 +198,7 @@ const ReturnOrderListTable = ({ tableData }: { tableData?: OrderReturnDataType[]
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
               <Typography color='text.primary' className='font-medium'>
-                {currencySymbol}
-                {''}
-                {row?.original?.total_price}
+                {currencySymbol} {Number(row?.original?.total_price).toFixed(2)}
               </Typography>
             </div>
           </div>

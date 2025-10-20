@@ -80,17 +80,6 @@ export async function updateFeedToGPT(id: number, data: FeedToChatGptType): Prom
   }
 }
 
-export async function getFeedToGptById(id: number): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.feedToChatGPT}`
-    const response = await GETBYID(url, id)
-
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching feedToChatGPT data')
-    }
-  }
+export async function getFeedToGptById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getFeedToChatGptBaseUrl()}/${id}/`)
 }

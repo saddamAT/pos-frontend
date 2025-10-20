@@ -1,11 +1,9 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import MenuItem from '@mui/material/MenuItem'
 import classnames from 'classnames'
@@ -44,6 +42,8 @@ import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 import Loader from '@/components/loader/Loader'
 import AddProduct from '@/components/product/add/AddProduct'
 import EditProduct from '@/components/dialogs/edit-product-info'
+import { useSession } from 'next-auth/react'
+import { getUserBusinessesById } from '@/api/user'
 
 // Extend react-table with custom filter functions
 declare module '@tanstack/table-core' {
@@ -102,6 +102,10 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
   const [openConfirmation, setOpenConfirmation] = useState(false)
   const [flowCreationFlag, setFlowCreationFlag] = useState(false)
   const [templateCreationFlag, setTemplateCreationFlag] = useState(false)
+  const { data: session } = useSession()
+  // console.log(session, 'session')
+
+  const loggedInUserId: number = session?.user?.id ?? 0
 
   const fetchMenues = async () => {
     try {
@@ -132,25 +136,25 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
   // }
 
   // Fetch Businesses and set the first business as selected by default
-  // useEffect(() => {
-  //   const fetchBusiness = async () => {
-  //     try {
-  //       const response = await getAllBusiness()
-  //       const businesses = response?.data?.results || []
-  //       setUserBusinessesData(businesses)
+  useEffect(() => {
+    const fetchBusiness = async () => {
+      try {
+        const response = await getUserBusinessesById(loggedInUserId)
+        const businesses = response?.data || []
+        setUserBusinessesData(businesses)
 
-  //       if (businesses && businesses.length > 0) {
-  //         setSelectedBusiness(businesses[0].id)
-  //         setSelectedBusinessId(businesses[0].business_id)
-  //         setCurrencySymbol(businesses[0].currency?.symbol) // Assuming 'id' is the unique identifier
-  //       }
-  //     } catch (err: any) {
-  //       toast.error(err.message || 'Failed to fetch businesses')
-  //     }
-  //   }
+        if (businesses && businesses.length > 0) {
+          setSelectedBusiness(businesses[0].id)
+          setSelectedBusinessId(businesses[0].business_id)
+          setCurrencySymbol(businesses[0].currency?.symbol) // Assuming 'id' is the unique identifier
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to fetch businesses')
+      }
+    }
 
-  //   fetchBusiness()
-  // }, [])
+    fetchBusiness()
+  }, [])
 
   useEffect(() => {
     const fetchBusinessByID = async () => {
@@ -326,15 +330,15 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
   const columns = useMemo<ColumnDef<MenuesTypeWithAction, any>[]>(
     () => [
       columnHelper.accessor('id', {
-        header: 'Product Number',
+        header: '#',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/products/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >
-            {`${row.original.menu_number}`}
-          </Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row?.original?.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
       columnHelper.accessor('title', {
@@ -382,26 +386,25 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center gap-3'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteMenu(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditProduct}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: menuData.find((item: any) => item.id === row.original.id),
+                  businesses: businesses
+                }}
               />
-              <IconButton>
-                <Link className='flex' href={getLocalizedUrl(`/products/${row.original.id}`, locale as Locale)}>
-                  <i className='tabler-eye text-textSecondary' />
-                </Link>
-              </IconButton>
             </div>
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -414,7 +417,21 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
                 }}
               />
             </div>
-            <div className='flex gap-4 justify-center'>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteMenu(row.original.id)}
+                dialogProps={{ type: 'delete' }}
+              />
+            </div>
+
+            <div>
               <Button
                 variant='contained'
                 disabled={row.original.flow || row.original.template} // Disable if flow or template is already created

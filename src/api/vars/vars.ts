@@ -49,5 +49,7 @@ export const ENDPOINTS = {
   facebookTemplates: 'facebook-templates/by-business',
   facebookFlows: 'facebook-flows/by-business',
   userBusinessById: 'whatseat/business/user',
-  currencies: 'currencies'
+  currencies: 'currencies',
+  subscriptions: 'subscriptions',
+  invitations: 'invitations'
 }

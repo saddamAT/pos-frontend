@@ -21,6 +21,7 @@ import { WhatsAppDataType } from '@/api/interface/whatsappInterface'
 import { GetWhatsApp } from '@/api/whatsapp'
 import { getAllBusiness } from '@/api/business'
 import { BusinessType } from '@/api/interface/businessInterface'
+import { Typography } from '@mui/material'
 
 export const metadata: Metadata = {
   title: 'Platforms ',
@@ -30,41 +31,53 @@ export const metadata: Metadata = {
 const Platforms = async ({ params }: Props) => {
   const session = await getServerSession(authOptions)
   const response = await getFeedToChatGpt()
-
   const feedToChatGpt: FeedToChatGptFileType[] = response?.data?.results ?? []
-  const businessRes = await getAllBusiness()
-  const businesses: BusinessType[] = businessRes?.data?.results ?? []
-
-  // const whatsAppResponse = await GetWhatsApp()
-  // const feedToWhatsApp: WhatsAppDataType[] = whatsAppResponse?.data?.results ?? []
+  // const businessRes = await getAllBusiness()
+  // const businesses: BusinessType[] = businessRes?.data?.results ?? []
 
   if (!session?.accessToken) {
     redirect(`/${params.lang}/login`)
+  }
+  if (!response?.success) {
+    return <Typography>Loading platforms</Typography>
   }
   return (
     <>
       <Grid container spacing={4}>
         <Grid item xs={12}>
-          <FeedToGptListTable tableData={feedToChatGpt} businesses={businesses} />
+          <FeedToGptListTable
+            tableData={feedToChatGpt}
+            // businesses={businesses}
+          />
         </Grid>
         <Grid item xs={12}>
           <WhatsppAppListTable
-            // tableData={feedToWhatsApp}
-            businesses={businesses}
+            // businesses={businesses}
             feedToChatGpt={feedToChatGpt}
           />
         </Grid>
         <Grid item xs={12}>
-          <ChatGptListTable businesses={businesses} />
+          <ChatGptListTable
+          // businesses={businesses}
+          />
         </Grid>
         <Grid item xs={12}>
-          <FaceBookListTable businesses={businesses} feedToChatGpt={feedToChatGpt} />
+          <FaceBookListTable
+            // businesses={businesses}
+            feedToChatGpt={feedToChatGpt}
+          />
         </Grid>
         <Grid item xs={12}>
-          <InstagramTableList businesses={businesses} feedToChatGpt={feedToChatGpt} />
+          <InstagramTableList
+            // businesses={businesses}
+            feedToChatGpt={feedToChatGpt}
+          />
         </Grid>
         <Grid item xs={12}>
-          <TelagramListTable businesses={businesses} feedToChatGpt={feedToChatGpt} />
+          <TelagramListTable
+            // businesses={businesses}
+            feedToChatGpt={feedToChatGpt}
+          />
         </Grid>
       </Grid>
     </>

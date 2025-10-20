@@ -24,6 +24,7 @@ export const GET = async (endpoint: string) => {
     return response
   } catch (error) {
     const axiosError = error as AxiosError
+    console.log(axiosError, 'axiosError')
 
     if (axiosError.response?.status === 401) {
       window.location.href = '/en/login'
@@ -39,7 +40,6 @@ export const GET = async (endpoint: string) => {
 
 export const GETBYID = async (endpoint: string, id: string | number) => {
   const session = await getSession()
-  console.log(session, 'session0-------------')
 
   if (!session || !session?.user || !session?.accessToken) {
     console.error('No valid session or auth token found')

@@ -11,7 +11,7 @@ import Card from '@mui/material/Card'
 
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
-import { MenuItem } from '@mui/material'
+import { ListItemText, MenuItem } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import { useForm } from 'react-hook-form'
@@ -134,12 +134,17 @@ const AddChatGptDrawer = ({ open, handleClose, businesses }: Props) => {
                       className: errors.business ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {businesses &&
-                      businesses?.map(business => (
+                    {businesses.length > 0 ? (
+                      businesses.map(business => (
                         <MenuItem key={business.id} value={business.id}>
                           {business.business_id}
                         </MenuItem>
-                      ))}
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No business found' />
+                      </MenuItem>
+                    )}
                   </CustomTextField>
                 </Grid>
 

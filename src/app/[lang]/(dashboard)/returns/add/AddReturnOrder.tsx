@@ -161,6 +161,13 @@ const AddReturnOrder: React.FC = () => {
       return
     }
 
+    if (selectedOrder?.status !== 'confirmed') {
+      toast.error(
+        `This order cannot be returned because its status is "${selectedOrder?.status}". Only orders with status "confirmed" can be returned.`
+      )
+      return
+    }
+
     setLoading(true)
 
     const submissionData = {

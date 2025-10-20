@@ -6,6 +6,8 @@ import {
   CompanyUserInvitation,
   UserInvitationCreation
 } from './interface/userInterface'
+import { ENDPOINTS } from './vars/vars'
+import { POST } from './api'
 
 type ApiResponse<T> = {
   success?: boolean
@@ -25,7 +27,7 @@ type GetApiResponse<T> = {
 const getInvitationsBaseUrl = (): string => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL
   if (!apiUrl) throw new Error('Missing API_URL environment variable')
-  return `${apiUrl}/user/invitations`
+  return `${apiUrl}/subscriptions/invitations`
 }
 const getUserCheckUrl = (): string => {
   const apiUrl = process.env.API_URL
@@ -60,9 +62,25 @@ export async function checkUserExists(email: string): Promise<GetApiResponse<Che
 }
 
 // CREATE new invitation
-export async function createUserInvitation(data: Record<string, unknown>): Promise<ApiResponse<any>> {
-  return await apiRequest('POST', `${getInvitationsBaseUrl()}/`, data)
+// export async function createUserInvitation(data: Record<string, unknown>): Promise<ApiResponse<any>> {
+//   return await apiRequest('POST', `${getInvitationsBaseUrl()}/`, data)
+// }
+
+export async function createUserInvitation(data: UserInvitationCreation): Promise<any> {
+  try {
+    const url = `subscriptions/${ENDPOINTS.invitations}/`
+    const response = await POST(url, data)
+
+    return response
+  } catch (error: any) {
+    if (error.response) {
+      throw error.response
+    } else {
+      throw new Error('Error in creating User Invitation')
+    }
+  }
 }
+
 // POST a new company-user invitation
 export async function addCompanyUserInvitation(
   data: Record<string, unknown>

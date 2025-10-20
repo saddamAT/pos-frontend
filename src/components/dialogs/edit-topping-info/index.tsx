@@ -26,7 +26,7 @@ type EditToppingInfoProps = {
   setOpen: (open: boolean) => void
   data?: ToppingDataTypeWithObjects
   onTypeAdded?: any
-  mode?: string
+  mode: 'add' | 'edit' | 'view'
 }
 
 const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditToppingInfoProps) => {
@@ -88,10 +88,16 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditTopping
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Edit Topping Information
+        {/* Edit Topping Information
         <Typography component='span' className='flex flex-col text-center'>
           Updating topping details will receive a privacy audit.
-        </Typography>
+        </Typography> */}
+        {mode === 'edit' ? 'Edit Topping Information' : mode === 'add' ? 'Add Topping Information' : 'Topping Details'}
+        {mode === 'edit' && (
+          <Typography component='span' className='flex flex-col text-center'>
+            Updating Topping details will receive a privacy audit.
+          </Typography>
+        )}
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
@@ -106,6 +112,9 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditTopping
                 })}
                 error={!!errors.name}
                 helperText={errors.name?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
@@ -117,6 +126,9 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditTopping
                 {...register('description', {
                   required: 'Topping description is required'
                 })}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
 
@@ -127,7 +139,7 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditTopping
                 type='number'
                 placeholder='Enter Additional Price'
                 defaultValue={data?.additional_price}
-                inputProps={{ step: 'any', min: '0.1' }} // Allows precise decimal values
+                inputProps={{ step: 'any', min: '0.1', readOnly: mode === 'view' }} // Allows precise decimal values
                 {...register('additional_price', {
                   required: 'Additional Price is required',
                   pattern: {
@@ -164,9 +176,12 @@ const EditToppingInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditTopping
           </Grid>
         </DialogContent>
         <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-          <Button variant='contained' type='submit'>
-            Submit
-          </Button>
+          {mode === 'edit' && (
+            <Button variant='contained' type='submit'>
+              Submit
+            </Button>
+          )}
+
           <Button variant='tonal' color='secondary' type='reset' onClick={handleClose}>
             Cancel
           </Button>

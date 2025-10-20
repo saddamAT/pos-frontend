@@ -14,6 +14,7 @@ const PrintPageClient: React.FC<PrintPageProps> = ({ id }) => {
   const [orderAddress, setOrderAddress] = useState<string | null>(null)
   const [orderCreatedDate, setOrderCreatedDate] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
+  const [currencySymbol, setCurrencySymbol] = useState<string | null>(null)
   const [orderItemsData, setOrderItemsData] = useState<OrderItems[]>([])
   const [orderBusinessName, setOrderBusinessName] = useState<string | null>(null)
   const [orderTotalPrice, setOrderTotalPrice] = useState<string | null>(null)
@@ -25,6 +26,8 @@ const PrintPageClient: React.FC<PrintPageProps> = ({ id }) => {
       try {
         const response = await getOrderById(Number(id))
         const orderData = response?.data
+
+        setCurrencySymbol(orderData?.business?.currency?.symbol)
 
         if (!orderData.is_pos && orderData.delivery_type === 'delivery') {
           // Remove "Textinput " from the address field
@@ -67,9 +70,12 @@ const PrintPageClient: React.FC<PrintPageProps> = ({ id }) => {
                 <h3>{item.name}</h3>
                 <div className='flex justify-between gap-[30px]'>
                   <p>
-                    {item.quantity} × ${parseFloat(item.net_price).toFixed(2)}
+                    {item.quantity} × {currencySymbol} {parseFloat(item.net_price).toFixed(2)}
                   </p>
-                  <p> ${(item.quantity * parseFloat(item.net_price)).toFixed(2)}</p>
+                  <p>
+                    {' '}
+                    {currencySymbol} {(item.quantity * parseFloat(item.net_price)).toFixed(2)}
+                  </p>
                 </div>
               </div>
             ))
@@ -82,22 +88,30 @@ const PrintPageClient: React.FC<PrintPageProps> = ({ id }) => {
         <div className='mt-2.5 text-start'>
           <div className='flex justify-between gap-[40px]'>
             <p>Delivery Cost</p>
-            <p> - $0.00</p>
+            <p> - {currencySymbol}0.00</p>
           </div>
           <div className='flex justify-between gap-[40px]'>
             <p>Service Charge</p>
-            <p> - $0.00</p>
+            <p> -{currencySymbol}0.00</p>
           </div>
           <div className='flex justify-between gap-[40px]'>
             <p>Total</p>
-            <p> ${orderTotalPrice}</p>
+            <p>
+              {' '}
+              {currencySymbol}
+              {Number(orderTotalPrice).toFixed(2)}
+            </p>
           </div>
           <hr className='border-t border-gray-400 my-2.5' />
         </div>
 
         <div className='mt-2.5 text-start'>
           <h3>The order has not been paid.</h3>
-          <h4>Customer will pay with ${orderTotalPrice}</h4>
+          <h4>
+            Customer will pay with {currencySymbol}
+            {/* {orderTotalPrice} */}
+            {Number(orderTotalPrice).toFixed(2)}
+          </h4>
           <hr className='border-t border-gray-400 my-2.5' />
         </div>
       </div>

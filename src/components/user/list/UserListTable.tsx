@@ -5,7 +5,6 @@ import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
 import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
 import type { TextFieldProps } from '@mui/material/TextField'
@@ -13,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import toast from 'react-hot-toast'
 import type { ButtonProps } from '@mui/material/Button'
 import classnames from 'classnames'
-import Link from 'next/link'
+
 import { rankItem } from '@tanstack/match-sorter-utils'
 import {
   createColumnHelper,
@@ -37,11 +36,10 @@ import type { UsersType } from '@/types/apps/userTypes'
 import { deletUser, getAllUsers } from '@/api/user'
 import Loader from '@/components/loader/Loader'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
-import EditUserInfo from '@/components/dialogs/edit-user-info'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
-import AddUserForm from '@/components/dialogs/add-user-form'
 import InvitationModal from '@/components/invitations/add/InvitationModal'
+import { BusinessType } from '@/api/interface/businessInterface'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
+import AddEditUser from '@/components/user/add/AddEditUser'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -105,9 +103,15 @@ const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['
 // Column Definitions
 const columnHelper = createColumnHelper<UsersTypeWithAction>()
 
-const UserListTable = ({ tableData, userType }: { tableData?: UsersType[]; userType?: UsersType[] }) => {
-  const { lang: locale } = useParams() as { lang: Locale }
-
+const UserListTable = ({
+  tableData,
+  userType,
+  businesses
+}: {
+  tableData?: UsersType[]
+  userType: UsersType[]
+  businesses: BusinessType[]
+}) => {
   const [rowSelection, setRowSelection] = useState({})
 
   const [data, setData] = useState<UsersType[]>(tableData || [])
@@ -132,17 +136,13 @@ const UserListTable = ({ tableData, userType }: { tableData?: UsersType[]; userT
     fetchUsers()
   }
 
-  const handleDeleteUser = (id: number, e: any) => {
-    e.preventDefault()
-
+  const handleDeleteUser = (id: number) => {
     deletUser(id.toString())
       .then(res => {
         toast.success('User  deleted successfully')
         fetchUsers()
       })
       .catch(error => {
-        console.log(error, 'error in deleting User ')
-
         if (error?.data && error?.data?.detail) {
           toast.error(error?.data?.detail)
         } else {
@@ -175,14 +175,17 @@ const UserListTable = ({ tableData, userType }: { tableData?: UsersType[]; userT
           />
         )
       },
+
       columnHelper.accessor('id', {
-        header: 'User Id',
+        header: '#',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/users/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
 
@@ -253,20 +256,48 @@ const UserListTable = ({ tableData, userType }: { tableData?: UsersType[]; userT
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton onClick={e => handleDeleteUser(row?.original?.id, e)}>
-              <i className='tabler-trash text-[22px] text-textSecondary' />
-            </IconButton>
-            <div className='flex gap-4 justify-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
-                elementProps={buttonProps('Edit', 'primary', 'contained')}
-                dialog={EditUserInfo}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  children: <i className='tabler-eye text-textSecondary' />
+                }}
+                dialog={AddEditUser}
                 onTypeAdded={handleTypeAdded}
                 dialogProps={{
+                  mode: 'view',
                   data: data.find((item: any) => item.id === row?.original?.id),
                   userType: userType
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={buttonProps('Edit', 'primary', 'contained')}
+                dialog={AddEditUser}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'edit',
+                  data: data.find((item: any) => item.id === row?.original?.id),
+                  userType: userType
+                }}
+              />
+            </div>
+
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteUser(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -322,37 +353,32 @@ const UserListTable = ({ tableData, userType }: { tableData?: UsersType[]; userT
             <MenuItem value='50'>50</MenuItem>
           </CustomTextField>
           <div className='flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4'>
-            <OpenDialogOnElementClick
-              element={Button}
-              elementProps={buttonProps('Invite User', 'primary', 'contained')}
-              dialog={InvitationModal}
-              onTypeAdded={handleTypeAdded}
-              dialogProps={{
-                mode: 'add'
-                // userBusiness: userBusiness
-              }}
-            />
             <DebouncedInput
               value={globalFilter ?? ''}
               onChange={value => setGlobalFilter(String(value))}
               placeholder='Search User'
               className='is-full sm:is-auto'
             />
-            {/* <OpenDialogOnElementClick
-              element={Button}
-              elementProps={buttonProps('Invite User', 'primary', 'contained')}
-              dialog={InvitationModal}
-              onConfirm={handleTypeAdded}
-              dialogProps={{}}
-            /> */}
 
             <OpenDialogOnElementClick
               element={Button}
               elementProps={buttonProps('Add User', 'primary', 'contained')}
-              dialog={AddUserForm}
+              dialog={AddEditUser}
               onTypeAdded={handleTypeAdded}
               dialogProps={{
-                data: userType
+                userType: userType,
+                mode: 'add'
+              }}
+            />
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={buttonProps('Invite User', 'primary', 'contained')}
+              dialog={InvitationModal}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businesses: businesses,
+                userType: userType
               }}
             />
           </div>

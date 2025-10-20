@@ -2,8 +2,6 @@
 
 // React Imports
 import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -46,10 +44,7 @@ import { useAuthStore } from '@/store/authStore'
 import { ChatGptType } from '@/api/interface/interfaceChatGPT'
 import { deleteChatGPT, getChatGpt } from '@/api/chatGpt'
 import EditChatGptInfo from '@/components/dialogs/edit-chatgpt-info'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
-import AddChatGptDrawer from '../add/AddChatGptDrawer'
 import { BusinessType } from '@/api/interface/businessInterface'
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -110,10 +105,14 @@ const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['
 // Column Definitions
 const columnHelper = createColumnHelper<ChatGptTypeWithAction>()
 
-const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]; businesses: BusinessType[] }) => {
-  const { lang: locale } = useParams() as { lang: Locale }
-  const { chatGptAction, chatGptData } = useAuthStore()
-  const [addUserOpen, setAddUserOpen] = useState(false)
+const ChatGptListTable = ({
+  tableData
+  // , businesses
+}: {
+  tableData?: ChatGptType[]
+  // businesses: BusinessType[]
+}) => {
+  const { chatGptAction, chatGptData, businessData } = useAuthStore()
   const [deleteChatGptOpen, setDeleteChatGptOpen] = useState(false)
   const [editChatGptFlag, setEditChatGptFlag] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
@@ -138,14 +137,15 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
 
   useEffect(() => {
     fetchChatGpt()
-  }, [addUserOpen, deleteChatGptOpen, editChatGptFlag])
+  }, [deleteChatGptOpen, editChatGptFlag])
 
-  const handleTypeAdded = () => {
-    fetchChatGpt()
+  const handleTypeAdded = async () => {
+    await fetchChatGpt()
     setEditChatGptFlag(true)
   }
 
   const handleDeleteChatGpt = (id: number) => {
+    setDeleteChatGptOpen(false)
     deleteChatGPT(id.toString())
       .then(res => {
         toast.success('Chat Gpt deleted successfully')
@@ -189,14 +189,17 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
           />
         )
       },
+
       columnHelper.accessor('id', {
-        header: '#',
+        header: ' #',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/chatgpt/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
       columnHelper.accessor('business', {
@@ -245,22 +248,24 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
-                  className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteChatGpt(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditChatGptInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: chatGptData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businessData
+                }}
               />
             </div>
-
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -269,8 +274,21 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
                 dialogProps={{
                   mode: 'edit',
                   data: chatGptData.find((item: any) => item.id === row?.original?.id),
-                  businesses
+                  businesses: businessData
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteChatGpt(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -333,14 +351,16 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
               className='is-full sm:is-auto'
             />
 
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
-              className='is-full sm:is-auto'
-            >
-              Chat Gpt
-            </Button>
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Add Chat Gpt', variant: 'contained' }}
+              dialog={EditChatGptInfo}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businesses: businessData
+              }}
+            />
           </div>
         </div>
 
@@ -403,8 +423,6 @@ const ChatGptListTable = ({ tableData, businesses }: { tableData?: ChatGptType[]
           }}
         />
       </Card>
-
-      <AddChatGptDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} businesses={businesses} />
     </>
   )
 }

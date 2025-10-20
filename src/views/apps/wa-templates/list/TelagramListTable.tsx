@@ -1,17 +1,14 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import type { TextFieldProps } from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
-
 // Third-party Imports
 import classnames from 'classnames'
 import { rankItem } from '@tanstack/match-sorter-utils'
@@ -51,11 +48,9 @@ declare module '@tanstack/table-core' {
 }
 
 import type { ButtonProps } from '@mui/material/Button'
-import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import Loader from '@/components/loader/Loader'
-import AddTelegramDrawer from '../add/AddTelegramDrawer'
 import { FeedToChatGptFileType } from '@/api/interface/interfaceFeedToGPT'
 import { BusinessType } from '@/api/interface/businessInterface'
 
@@ -110,21 +105,17 @@ const columnHelper = createColumnHelper<TelegramTypeWithAction>()
 
 const TelegramListTable = ({
   tableData,
-  businesses,
+  // businesses,
   feedToChatGpt
 }: {
   tableData?: TelegramDataType[]
-  businesses: BusinessType[]
+  // businesses: BusinessType[]
   feedToChatGpt: FeedToChatGptFileType[]
 }) => {
-  const router = useRouter()
-  const { lang: locale } = useParams() as { lang: Locale }
-
   const [rowSelection, setRowSelection] = useState({})
-  const [addUserOpen, setAddUserOpen] = useState(false)
   const [data, setData] = useState<TelegramDataType[]>(tableData || [])
   const [deleteTelegramOpen, setDeleteTelegramOpen] = useState(false)
-  const { telegramAction, telegramData } = useAuthStore()
+  const { telegramAction, telegramData, businessData } = useAuthStore()
   const [globalFilter, setGlobalFilter] = useState('')
   const [loading, setLoading] = useState<boolean>(false)
   const [editTelegramFlag, setEditTelegramFlag] = useState(false)
@@ -145,7 +136,7 @@ const TelegramListTable = ({
 
   useEffect(() => {
     fetchTeleGram()
-  }, [addUserOpen, deleteTelegramOpen, editTelegramFlag])
+  }, [deleteTelegramOpen, editTelegramFlag])
 
   const handleTypeAdded = () => {
     fetchTeleGram()
@@ -156,11 +147,16 @@ const TelegramListTable = ({
     setDeleteTelegramOpen(false)
     deletTeleGram(id.toString())
       .then(res => {
-        toast.success('TeleGram deleted successfully')
+        toast.success('Telegram deleted successfully')
         setDeleteTelegramOpen(true)
       })
       .catch(error => {
         console.log(error, 'error in deleting TeleGram')
+        if (error?.data && error?.data?.detail) {
+          toast.error(error?.data?.detail)
+        } else {
+          toast.error('error in deleting TeleGram')
+        }
       })
   }
 
@@ -194,13 +190,15 @@ const TelegramListTable = ({
         )
       },
       columnHelper.accessor('id', {
-        header: '#',
+        header: ' #',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/telegram/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
       columnHelper.accessor('business', {
@@ -269,22 +267,26 @@ const TelegramListTable = ({
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteTelegram(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditTelegramInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: telegramData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businessData,
+                  feedToChatGpt
+                }}
               />
             </div>
-
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -293,9 +295,22 @@ const TelegramListTable = ({
                 dialogProps={{
                   mode: 'edit',
                   data: telegramData.find((item: any) => item.id === row?.original?.id),
-                  businesses,
+                  businesses: businessData,
                   feedToChatGpt
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteTelegram(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -356,14 +371,18 @@ const TelegramListTable = ({
               placeholder='Search Telegram'
               className='is-full sm:is-auto'
             />
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
-              className='is-full sm:is-auto'
-            >
-              Add Telegram
-            </Button>
+
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Add Telegram', variant: 'contained' }}
+              dialog={EditTelegramInfo}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businesses: businessData,
+                feedToChatGpt
+              }}
+            />
           </div>
         </div>
         <div className='overflow-x-auto'>
@@ -425,13 +444,6 @@ const TelegramListTable = ({
           }}
         />
       </Card>
-
-      <AddTelegramDrawer
-        open={addUserOpen}
-        handleClose={() => setAddUserOpen(!addUserOpen)}
-        businesses={businesses}
-        feedToChatGpt={feedToChatGpt}
-      />
     </>
   )
 }

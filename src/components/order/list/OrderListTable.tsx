@@ -124,6 +124,7 @@ const columnHelper = createColumnHelper<OrdersTypeWithAction>()
 
 const OrderListTable = ({ tableData }: { tableData?: OrdersType[] }) => {
   const router = useRouter()
+
   const { lang: locale } = useParams() as { lang: Locale }
   const [rowSelection, setRowSelection] = useState({})
   const [editOrderFlag, setEditOrderFlag] = useState(false)
@@ -250,33 +251,34 @@ const OrderListTable = ({ tableData }: { tableData?: OrdersType[] }) => {
         cell: ({ row }) => (
           <Typography>
             {currencySymbol} {''}
-            {row?.original?.total_price}
+            {/* {row?.original?.total_price} */}
+            {Number(row?.original?.total_price).toFixed(2)}
           </Typography>
         )
       }),
-      columnHelper.accessor('total_profit', {
-        header: 'Total Profit',
-        cell: ({ row }) => (
-          <Typography>
-            {currencySymbol} {''}
-            {row?.original?.total_profit}
-          </Typography>
-        )
-      }),
+      // columnHelper.accessor('total_profit', {
+      //   header: 'Total Profit',
+      //   cell: ({ row }) => (
+      //     <Typography>
+      //       {currencySymbol} {''}
+      //       {row?.original?.total_profit}
+      //     </Typography>
+      //   )
+      // }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
+          <div className='flex gap-2'>
             <IconButton onClick={e => handlePrintOrder(row.original.id, e)}>
               <i className='tabler-file-description' />
             </IconButton>
 
-            <div className='flex items-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
+                  color: 'primary',
                   children: <i className='tabler-trash text-[22px]' />
                 }}
                 dialog={ConfirmationDialog}
@@ -285,7 +287,7 @@ const OrderListTable = ({ tableData }: { tableData?: OrdersType[] }) => {
               />
             </div>
 
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}

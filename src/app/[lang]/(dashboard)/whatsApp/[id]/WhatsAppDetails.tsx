@@ -1,7 +1,7 @@
 // MUI Imports
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Grid from '@mui/material/Grid'
 import { useParams, useRouter } from 'next/navigation'
 import CustomTextField from '@core/components/mui/TextField'
@@ -10,16 +10,15 @@ import { Dialog, DialogContent, DialogTitle } from '@mui/material'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
 import { WhatsAppDataType } from '@/api/interface/whatsappInterface'
-import { getWhatsAppById } from '@/api/whatsapp'
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewWhatsAppProps = {
-  id: string
+  whatsAppItemData: WhatsAppDataType | null
 }
 
 // MenuDataType
-const WhatsAppDetails = ({ id }: PreviewWhatsAppProps) => {
-  const [whatsAppItemData, setWhatsAppItemData] = useState<WhatsAppDataType | null>(null)
+const WhatsAppDetails = ({ whatsAppItemData }: PreviewWhatsAppProps) => {
+  console.log(whatsAppItemData, 'whatsAppItemData')
 
   const { lang: locale } = useParams() as { lang: Locale }
   const [open, setOpen] = useState(true)
@@ -29,18 +28,6 @@ const WhatsAppDetails = ({ id }: PreviewWhatsAppProps) => {
     setOpen(false)
     router.push(getLocalizedUrl('/platforms', locale as Locale))
   }
-
-  useEffect(() => {
-    const fetchWhats = async () => {
-      try {
-        const response = await getWhatsAppById(Number(id))
-        setWhatsAppItemData(response?.data)
-      } catch (error: any) {
-        // Handle error
-      }
-    }
-    fetchWhats()
-  }, [id])
 
   return (
     <>

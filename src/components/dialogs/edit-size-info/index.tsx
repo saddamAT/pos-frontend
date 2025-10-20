@@ -64,14 +64,14 @@ const EditSizeInfo = ({ open, setOpen, data, id, onTypeAdded, mode }: EditSizeIn
     try {
       await updateMenuSize(id, payloadData)
 
-      toast.success('Menu Size Updated Successfully', {
+      toast.success('Product Size Updated Successfully', {
         duration: 5000
       })
 
       onTypeAdded?.()
       setOpen(false)
     } catch (error) {
-      console.error('Error updating menu size:', error)
+      console.error('Error updating Product size:', error)
     } finally {
       setLoading(false)
     }

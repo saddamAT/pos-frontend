@@ -18,6 +18,8 @@ import toast from 'react-hot-toast'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
 import { BusinessType } from '@/api/interface/businessInterface'
+import { ListItemText } from '@mui/material'
+import { useAuthStore } from '@/store/authStore'
 
 type PostalCodesFormProps = {
   businesses: BusinessType[]
@@ -25,6 +27,7 @@ type PostalCodesFormProps = {
 
 const PostalCodesForm = ({ businesses }: PostalCodesFormProps) => {
   const [loading, setLoading] = useState<boolean>(false)
+  const { businessData } = useAuthStore()
 
   const router = useRouter()
   const { lang: locale } = useParams() as { lang: Locale }
@@ -79,12 +82,17 @@ const PostalCodesForm = ({ businesses }: PostalCodesFormProps) => {
                     className: errors.business ? 'requiredFieldError' : undefined
                   }}
                 >
-                  {businesses &&
-                    businesses?.map(business => (
+                  {businessData && businessData.length > 0 ? (
+                    businessData.map((business: BusinessType) => (
                       <MenuItem key={business.id} value={business.id}>
                         {business.business_id}
                       </MenuItem>
-                    ))}
+                    ))
+                  ) : (
+                    <MenuItem disabled value=''>
+                      <ListItemText primary='No business found' />
+                    </MenuItem>
+                  )}
                 </CustomTextField>
               </Grid>
             </Grid>

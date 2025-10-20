@@ -1,12 +1,10 @@
 'use client'
 
 import CustomTextField from '@/@core/components/mui/TextField'
-import { getAllBusiness } from '@/api/business'
 import { BusinessType } from '@/api/interface/businessInterface'
 
-import { CreateInvitationRequest } from '@/api/interface/userInterface'
+import { UserInvitationCreation } from '@/api/interface/userInterface'
 import { createUserInvitation } from '@/api/invitations'
-import { getUserType } from '@/api/user'
 
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 import { UserType } from '@/types/apps/restoTypes'
@@ -18,7 +16,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Grid from '@mui/material/Grid'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
@@ -27,30 +25,24 @@ type InviteUserFormProps = {
   setOpen: (open: boolean) => void
   data?: any
   onConfirm?: any
+  businesses: BusinessType[]
+  userType: UserType[]
 }
 
-type InviteUserFormDataType = {
-  email: string
-  user_type: number
-  business: number
-}
-
-const InvitationModal = ({ open, setOpen, onConfirm }: InviteUserFormProps) => {
+const InvitationModal = ({ open, setOpen, onConfirm, businesses, userType }: InviteUserFormProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const [userRoles, setUserRoles] = useState<UserType[]>([])
-  const [businessData, setBusinessData] = useState<BusinessType[]>([])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset
-  } = useForm<InviteUserFormDataType>()
+  } = useForm<UserInvitationCreation>()
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: UserInvitationCreation) => {
     setLoading(true)
 
-    const payload: CreateInvitationRequest = {
+    const payload = {
       email: data?.email,
       user_type: data?.user_type,
       business: data?.business
@@ -74,26 +66,6 @@ const InvitationModal = ({ open, setOpen, onConfirm }: InviteUserFormProps) => {
     setOpen(false)
     reset()
   }
-
-  const fetchUserRolesAndCompanies = async () => {
-    // const response1 = await getUserRoles()
-    // const companyResponse = await getCompanyUsers()
-    const userTypeResp = await getUserType()
-    const userTypeResponse: UserType[] = userTypeResp?.data?.results ?? []
-    const response = await getAllBusiness()
-    const updatedData = response?.data?.results ?? []
-
-    if (response.success) {
-      setUserRoles(userTypeResponse)
-      setBusinessData(updatedData)
-    } else {
-      toast.error('Failed to load User Roles')
-    }
-  }
-
-  useEffect(() => {
-    fetchUserRolesAndCompanies()
-  }, [])
 
   return (
     <Dialog fullWidth open={open} scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
@@ -131,7 +103,7 @@ const InvitationModal = ({ open, setOpen, onConfirm }: InviteUserFormProps) => {
                       className: errors.business ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {businessData.map(b => (
+                    {businesses.map(b => (
                       <MenuItem key={b.id} value={b.id}>
                         {b.business_id}
                       </MenuItem>
@@ -149,8 +121,8 @@ const InvitationModal = ({ open, setOpen, onConfirm }: InviteUserFormProps) => {
                   error={!!errors.user_type}
                   helperText={errors.user_type?.message}
                 >
-                  {userRoles &&
-                    userRoles.map((user: UserType) => (
+                  {userType &&
+                    userType.map((user: UserType) => (
                       <MenuItem key={user.id} value={user.id}>
                         {user.type}
                       </MenuItem>

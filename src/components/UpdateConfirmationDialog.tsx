@@ -45,13 +45,7 @@ const UpdateConfirmationDialog: React.FC<UpdateConfirmationDialogProps> = ({
         <DialogContentText id='alert-dialog-description'>{description}</DialogContentText>
       </DialogContent>
       <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-        <Button
-          onClick={handleConfirm}
-          variant='contained'
-          // color='success'
-          disableElevation
-          autoFocus
-        >
+        <Button onClick={handleConfirm} variant='contained' color='primary' disableElevation autoFocus>
           {confirmText}
         </Button>
         <Button onClick={onClose} variant='tonal' color='secondary' disableElevation>

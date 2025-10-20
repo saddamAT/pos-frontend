@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
-import { MenuItem } from '@mui/material'
+import { ListItemText, MenuItem } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import { useForm } from 'react-hook-form'
@@ -135,12 +135,17 @@ const AddInstagramDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Pr
                       className: errors.business ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {businesses &&
-                      businesses?.map(business => (
+                    {businesses.length > 0 ? (
+                      businesses.map(business => (
                         <MenuItem key={business.id} value={business.id}>
                           {business.business_id}
                         </MenuItem>
-                      ))}
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No business found' />
+                      </MenuItem>
+                    )}
                   </CustomTextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -159,12 +164,17 @@ const AddInstagramDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Pr
                       className: errors.feed_to_gpt ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {feedToChatGpt &&
-                      feedToChatGpt?.map(feed => (
+                    {feedToChatGpt.length > 0 ? (
+                      feedToChatGpt.map(feed => (
                         <MenuItem key={feed.id} value={feed.id}>
                           {feed.name}
                         </MenuItem>
-                      ))}
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No Feed to gpt available' />
+                      </MenuItem>
+                    )}
                   </CustomTextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>

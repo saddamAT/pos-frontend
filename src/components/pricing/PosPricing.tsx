@@ -2,11 +2,8 @@
 
 import CustomInputVertical from '@/@core/components/custom-inputs/Vertical'
 import { CustomInputVerticalData } from '@/@core/components/custom-inputs/types'
-// import CustomInputVertical from '#/src/@core/components/custom-inputs/Vertical'
-// import type { CustomInputVerticalData } from '#/src/@core/components/custom-inputs/types'
+import { getUserSubscription, updateUserSubscription } from '@/api/subscription'
 import { CreationSubscription, UserSubscription } from '@/types/apps/subscriptions'
-// import { getUserSubscription, updateUserSubscription } from '#/src/app/actions/subscriptions'
-// import { CreationSubscription, UserSubscription } from '#/src/types/apps/subscriptions'
 import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
@@ -121,6 +118,18 @@ const PosPricing: React.FC = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
 
   const { data: session } = useSession()
+  // console.log(session, 'session')
+
+  let selectedBusinessId = ''
+
+  if (session?.user.userBusinesses && session.user.selectedBusiness?.id) {
+    const match = session.user.userBusinesses.find(ub =>
+      ub.user_business?.some(b => b.id === session?.user?.selectedBusiness?.id)
+    )
+    selectedBusinessId = match?.business_id || selectedBusinessId
+  }
+  console.log(selectedBusinessId, 'selectedBusinessId')
+
   //   const userRole = session?.user?.role
 
   const {
@@ -134,44 +143,49 @@ const PosPricing: React.FC = () => {
 
     const payload = {
       plan: data.plan,
-      price: selected?.price,
+      price: selected?.price ?? 0,
       invoice_limit: 2800,
-      notes: 'Initial plan for new client'
+      notes: 'Initial plan for new client',
+      is_active: true,
+      user: session?.user?.id ?? 0,
+      business: selectedBusinessId
     }
 
-    // const response = await updateUserSubscription(payload, selectedPlanId!)
+    // const response = await updateUserSubscription(payload, selectedPlanId)
+    const response = await updateUserSubscription(Number(selectedPlanId), payload)
 
-    // if (response.success) {
-    //   toast.success('Subscription Updated successfully')
-    // } else if (typeof response.error === 'object' && response.error !== null && 'detail' in response.error) {
-    //   toast.error((response.error as { detail: string }).detail)
-    // } else if (typeof response.error === 'string') {
-    //   toast.error(response.error)
-    // } else {
-    //   toast.error('Something went wrong')
-    // }
+    if (response.success) {
+      toast.success('Subscription Updated successfully')
+    } else if (typeof response.error === 'object' && response.error !== null && 'detail' in response.error) {
+      toast.error((response.error as { detail: string }).detail)
+    } else if (typeof response.error === 'string') {
+      toast.error(response.error?.detail)
+    } else {
+      toast.error('Something went wrong')
+    }
   }
 
-  //   const fetchUserSubscription = async () => {
-  //     try {
-  //       const response = await getUserSubscription()
+  const fetchUserSubscription = async () => {
+    try {
+      const response = await getUserSubscription()
+      console.log(response, 'response')
 
-  //       if (response.success) {
-  //         const subscriptions: UserSubscription[] = (response?.data?.results ?? []).flat()
+      if (response.success) {
+        const subscriptions: UserSubscription[] = (response?.data?.results ?? []).flat()
 
-  //         setSubscriptionData(subscriptions)
-  //         setSelectedPlanId(subscriptions[0]?.id ?? null)
-  //       }
-  //     } catch (err) {
-  //       console.log(err)
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   }
+        setSubscriptionData(subscriptions)
+        setSelectedPlanId(subscriptions[0]?.id ?? 0)
+      }
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  //   useEffect(() => {
-  //     fetchUserSubscription()
-  //   }, [])
+  useEffect(() => {
+    fetchUserSubscription()
+  }, [])
 
   return (
     <FormProvider {...methods}>

@@ -7,6 +7,7 @@ type GetApiResponse<T> = {
   success?: boolean
   data?: T
   error?: string | object
+  status?: number
 }
 
 const getUserBusinessBaseUrl = (): string => {

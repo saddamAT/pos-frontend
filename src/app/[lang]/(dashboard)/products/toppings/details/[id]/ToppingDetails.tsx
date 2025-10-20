@@ -8,17 +8,15 @@ import CustomTextField from '@core/components/mui/TextField'
 import { Dialog, DialogContent, DialogTitle } from '@mui/material'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { Locale } from '@/configs/i18n'
-import { getToppingsById } from '@/api/toppings'
 import { ToppingDataTypeWithObjects } from '@/api/interface/toppingInterface'
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type ToppingDetailsProps = {
-  id: string
+  toppingItemData: ToppingDataTypeWithObjects | null
 }
 
 // MenuDataType
-const ToppingDetails = ({ id }: ToppingDetailsProps) => {
-  const [toppingItemData, setToppingItemData] = useState<ToppingDataTypeWithObjects | null>(null)
+const ToppingDetails = ({ toppingItemData }: ToppingDetailsProps) => {
   const { lang: locale } = useParams() as { lang: Locale }
   const [open, setOpen] = useState(true)
   const router = useRouter()
@@ -27,18 +25,6 @@ const ToppingDetails = ({ id }: ToppingDetailsProps) => {
     setOpen(false)
     router.push(getLocalizedUrl('/products', locale as Locale))
   }
-
-  useEffect(() => {
-    const fetchToppingsById = async () => {
-      try {
-        const response = await getToppingsById(Number(id))
-        setToppingItemData(response?.data)
-      } catch (error: any) {
-        console.log(error?.data)
-      }
-    }
-    fetchToppingsById()
-  }, [id])
 
   return (
     <>

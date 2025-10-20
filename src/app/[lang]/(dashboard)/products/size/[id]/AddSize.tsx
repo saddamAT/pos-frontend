@@ -9,8 +9,23 @@ import CustomTextField from '@core/components/mui/TextField'
 import { useForm } from 'react-hook-form'
 import MenuItem from '@mui/material/MenuItem'
 import Loader from '@/components/loader/Loader'
-import { createSize, getBusinessMenuesById } from '@/api/size'
-import { BusinessMenusDataType, SizeDataTypeWithoutId } from '@/api/interface/sizeInterface'
+import { createSize, getBusinessMenuesById, getMenuSizeById } from '@/api/size'
+import { BusinessMenusDataType, SizeDataType, SizeDataTypeWithoutId } from '@/api/interface/sizeInterface'
+import { getToppingSizeByBusinessId } from '@/api/toppings'
+import * as React from 'react'
+
+import ListItemText from '@mui/material/ListItemText'
+import Select, { SelectChangeEvent } from '@mui/material/Select'
+import Checkbox from '@mui/material/Checkbox'
+import type { ThemeColor } from '@core/types'
+import type { ButtonProps } from '@mui/material/Button'
+import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
+import AddProductSizeModal from '@/components/dialogs/add-size'
+const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
+  children,
+  color,
+  variant
+})
 
 type PreviewToppingsProps = {
   id: string
@@ -20,10 +35,17 @@ type PreviewToppingsProps = {
 
 const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
   const [BusinessMenuesData, setBusinessMenuesData] = useState<BusinessMenusDataType[]>([])
+  const [data, setData] = useState<SizeDataType[]>([])
 
   const [loading, setLoading] = useState<boolean>(false)
   const [addSizeFlag, setAddSizeFlag] = useState<boolean>(false)
   const [selectedBusinessMenu, setSelectedBusinessMenu] = useState<boolean>(false)
+  const [selectedNames, setSelectedNames] = useState<string[]>([])
+  // handler
+  const handleChange = (event: SelectChangeEvent<string[]>) => {
+    const { value } = event.target
+    setSelectedNames(typeof value === 'string' ? value.split(',') : value)
+  }
 
   const {
     register,
@@ -44,6 +66,28 @@ const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
 
     return selectedItem?.business ? true : 'Business ID is required'
   }
+
+  const fetchMenuSizes = async () => {
+    try {
+      setLoading(true)
+      // const response = await getMenuSizeById(Number(id))
+      const response = await getToppingSizeByBusinessId(Number(id))
+      const menuSize: SizeDataType[] = (response?.data || []).sort((a: any, b: any) =>
+        a.menu.title.localeCompare(b.menu.title)
+      )
+      setData(menuSize)
+      setLoading(false)
+    } catch (err: any) {
+      console.error('Error fetching sizes:', err)
+      toast.error(err.message || 'Failed to fetch sizes')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMenuSizes()
+  }, [id])
 
   const onSubmit = (data: SizeDataTypeWithoutId, e: any) => {
     e.preventDefault()
@@ -115,11 +159,48 @@ const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
     fetchBusinessMenus()
   }, [id])
 
+  const handleTypeAdded = () => {
+    // fetchFoodTypes()
+  }
+
   return (
     <>
       <Card>
         <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6'>
           <Grid container spacing={5} alignItems='center'>
+            {/* <Grid item xs={12} sm={6}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Select
+                  multiple
+                  value={selectedNames}
+                  onChange={handleChange}
+                  renderValue={selected => (selected as string[]).join(', ')}
+                  sx={{ width: '370px', maxHeight: '38px', marginTop: '12px' }}
+                >
+                  {data.length > 0 ? (
+                    data.map(option => (
+                      <MenuItem key={option.id} value={option.name}>
+                        <Checkbox checked={selectedNames.includes(option.name)} />
+                        <ListItemText primary={option.name} secondary={option.description} />
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText primary='No sizes found for this product' />
+                    </MenuItem>
+                  )}
+                </Select>
+                <div style={{ marginLeft: '10px', marginTop: '10px', flex: '0 0 21%' }}>
+                  <OpenDialogOnElementClick
+                    element={Button}
+                    elementProps={buttonProps('Add Size', 'primary', 'contained')}
+                    dialog={AddProductSizeModal}
+                    dialogProps={{}}
+                    onTypeAdded={handleTypeAdded} // Pass the callback
+                  />
+                </div>
+              </div>
+            </Grid> */}
             <Grid item xs={12} sm={6}>
               <CustomTextField
                 label='Name *'
@@ -164,7 +245,7 @@ const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
               <CustomTextField
                 select
                 fullWidth
-                label='Product*'
+                label='Product *'
                 value={watch('menu') || 0} // Add this line to control the displayed value
                 {...register('menu', {
                   required: 'Business Menu is required',
@@ -172,6 +253,8 @@ const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                     const selectedId = Number(e.target.value)
                     const selectedItem = BusinessMenuesData.find(item => item.id === selectedId)
+                    console.log(selectedItem, 'selectedItem-----7878')
+
                     if (selectedItem) {
                       setValue('business', Number(selectedItem.business), { shouldValidate: true })
                       setValue('type', selectedItem?.type?.id, { shouldValidate: true })
@@ -199,10 +282,10 @@ const AddSize = ({ id, isCreated, onCreateSize }: PreviewToppingsProps) => {
                   Save Size
                 </Button>
               </div>
-              {loading && <Loader />}
             </Grid>
           </Grid>
         </form>
+        {loading && <Loader />}
       </Card>
     </>
   )

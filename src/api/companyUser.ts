@@ -64,6 +64,6 @@ export async function deleteCompanyUser(id: string): Promise<ApiResponse<null>> 
 }
 
 // GET SINGLE COMPANY USER BY ID
-export async function getUserById(id: string): Promise<GetApiResponse<UserCreation>> {
+export async function getUserById(id: number): Promise<GetApiResponse<UserCreation>> {
   return await apiRequest('GET', `${getCompanyUserListBaseUrl()}/${id}/`)
 }

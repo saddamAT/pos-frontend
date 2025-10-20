@@ -158,7 +158,7 @@ const OrderReturnDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
                         <td>
                           <Typography color='text.primary'>
                             {currencySymbol} {''}
-                            {item.total_price}
+                            {Number(item.total_price).toFixed(2)}
                           </Typography>
                         </td>
                       </tr>

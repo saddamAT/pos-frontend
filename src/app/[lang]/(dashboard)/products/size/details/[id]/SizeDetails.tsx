@@ -1,7 +1,7 @@
 // MUI Imports
 'use client'
-import { useEffect, useState } from 'react'
-import { getMenuSizeById } from '@/api/size'
+import { useState } from 'react'
+
 import Grid from '@mui/material/Grid'
 import { useParams, useRouter } from 'next/navigation'
 import CustomTextField from '@core/components/mui/TextField'
@@ -13,12 +13,10 @@ import { SizeDataType } from '@/api/interface/sizeInterface'
 import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type SizeDetailsProps = {
-  id: string
+  menuSizeItemData: SizeDataType | null
 }
 
-// MenuDataType
-const SizeDetails = ({ id }: SizeDetailsProps) => {
-  const [menuSizeItemData, setMenuSizeItemData] = useState<SizeDataType | null>(null)
+const SizeDetails = ({ menuSizeItemData }: SizeDetailsProps) => {
   const { lang: locale } = useParams() as { lang: Locale }
   const [open, setOpen] = useState(true)
   const router = useRouter()
@@ -27,21 +25,6 @@ const SizeDetails = ({ id }: SizeDetailsProps) => {
     setOpen(false)
     router.push(getLocalizedUrl('/products', locale as Locale))
   }
-
-  useEffect(() => {
-    const fetchMenuSize = async () => {
-      try {
-        const response = await getMenuSizeById(Number(id))
-
-        setMenuSizeItemData(response?.data)
-      } catch (error: any) {
-        console.log(error?.data)
-
-        // Handle error
-      }
-    }
-    fetchMenuSize()
-  }, [id])
 
   return (
     <>

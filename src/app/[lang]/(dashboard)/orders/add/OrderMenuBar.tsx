@@ -20,6 +20,8 @@ import { Locale } from '@/configs/i18n'
 import Loader from '@/components/loader/Loader'
 import { createOrder } from '@/api/order'
 import { RestaurantType } from '@/types/apps/restoTypes'
+import DeleteIcon from '@mui/icons-material/Delete'
+import Tooltip from '@mui/material/Tooltip'
 
 const OrderMenuBar = () => {
   const router = useRouter()
@@ -62,8 +64,9 @@ const OrderMenuBar = () => {
   const [profit, setProfit] = useState(0)
   const [subtotal, setSubtotal] = useState<number>(0)
   const [currencySymbol, setCurrencySymbol] = useState('')
+
   // console.log(currencySymbol, 'currencySymbol')
-  // console.log(allMenus, 'allMenus')
+  // console.log(orderId, 'orderId')
 
   const [order, setOrder] = useState<
     {
@@ -295,7 +298,7 @@ const OrderMenuBar = () => {
 
     createOrder(submissionData)
       .then(res => {
-        // console.log(res?.data, 'Order Success Response')
+        console.log(res?.data, 'Order Success Response')
         setOrderSuccessData(res?.data)
         setOrderId(res?.data?.id)
         setOrderSuccessFlag(true)
@@ -311,15 +314,19 @@ const OrderMenuBar = () => {
       })
       .finally(() => {
         setLoading(false)
-        setOrderSuccessFlag(true)
       })
   }
 
-  // const handlePrintOrder = (id: number, e: any) => {
-  //   e.preventDefault()
-  //   resetOrderAndForm()
-  //   router.push(getLocalizedUrl(`/orders/${id}`, locale as Locale))
-  // }
+  const handlePrintOrder = (id: number, e: any) => {
+    e.preventDefault()
+    resetOrderAndForm()
+    router.push(getLocalizedUrl(`/orders/${id}`, locale as Locale))
+  }
+
+  const handleDeleteOrder = () => {
+    console.log('delete order')
+    setOrder([])
+  }
 
   return (
     <div>
@@ -438,14 +445,23 @@ const OrderMenuBar = () => {
 
         <Box sx={{ width: '30%', bgcolor: 'background.paper' }}>
           <Card sx={{ p: 2 }}>
-            <Typography variant='h6' className='mb-4'>
-              Current Order
-            </Typography>
+            <div className='flex items-center justify-between mb-4'>
+              <Typography variant='h6'>Current Order</Typography>
+              {order.length > 1 && (
+                <Tooltip title='Delete all items in this order?' arrow>
+                  <DeleteIcon
+                    onClick={handleDeleteOrder}
+                    className='cursor-pointer text-red-500 hover:text-red-700 transition-colors'
+                    fontSize='medium'
+                  />
+                </Tooltip>
+              )}
+            </div>
 
             {order.length > 0 ? (
               order.map(item => (
                 <Box key={item.id}>
-                  <Box className='mb-4 mt-4'>
+                  <Box className='mb-1 mt-1'>
                     <Typography variant='body1'>{item.name}</Typography>
                   </Box>
 
@@ -543,7 +559,7 @@ const OrderMenuBar = () => {
             >
               Process Order
             </Button>
-            {/* <Button
+            <Button
               style={{ marginTop: '10px' }}
               variant='contained'
               color='primary'
@@ -552,7 +568,7 @@ const OrderMenuBar = () => {
               disabled={!orderSuccessFlag}
             >
               Print Order
-            </Button> */}
+            </Button>
           </Card>
         </Box>
       </Box>

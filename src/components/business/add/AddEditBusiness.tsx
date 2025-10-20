@@ -27,11 +27,12 @@ import type { CurrencyDataType } from '@/api/interface/currencyInterface'
 import { BusinessDataTypeForAddBusiness, BusinessEditPayload } from '@/api/interface/businessInterface'
 import { useSession } from 'next-auth/react'
 import { getUserBusinessesById } from '@/api/user'
+import { ListItemText } from '@mui/material'
 
 type AddEditBusinessProps = {
   open: boolean
   setOpen: (open: boolean) => void
-  mode: 'add' | 'edit'
+  mode: 'add' | 'edit' | 'view'
   data?: BusinessEditPayload
   currencies: CurrencyDataType[]
   onTypeAdded?: () => void
@@ -39,15 +40,14 @@ type AddEditBusinessProps = {
 
 const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }: AddEditBusinessProps) => {
   const { data: session, update } = useSession()
-
   const [loading, setLoading] = useState(false)
   const [openConfirmation, setOpenConfirmation] = useState(false)
   const [payloadData, setPayloadData] = useState<BusinessEditPayload | null>(null)
-
   const [created, setCreated] = useState(false)
   const [updated, setUpdated] = useState(false)
   const userSession = useSession()
-  const userId = userSession?.data?.user?.id!
+  // const userId = userSession?.data?.user?.id!
+  const userId = userSession?.data?.user?.id ?? 0
   //   if (!userSession?.data?.user?.id) {
   //     throw new Error('User ID missing')
   //   }
@@ -61,7 +61,7 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
   } = useForm<BusinessEditPayload | BusinessDataTypeForAddBusiness>()
 
   useEffect(() => {
-    if (mode === 'edit' && data) {
+    if ((mode === 'edit' || mode === 'view') && data) {
       reset(data)
     } else {
       reset()
@@ -86,14 +86,10 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
       }
 
       await updateBusiness(payloadData.id, submittedpayload)
-      // const response = await getAllBusiness()
-      // const businesses = response?.data?.results ?? []
+
       const response = await getUserBusinessesById(userId)
       const businesses = response?.data ?? []
-      // console.log(businesses, 'allBusinessData before-----------')
-
       await update({ userBusinesses: businesses })
-
       toast.success('Business Updated Successfully')
       setUpdated(true)
       onTypeAdded?.()
@@ -142,14 +138,7 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
         await createBusiness(formData)
         const response = await getUserBusinessesById(userId)
         const businesses = response?.data ?? []
-        // const response = await getAllBusiness()
-        // const businesses = response?.data?.results ?? []
-        // console.log(businesses, 'allBusinessData before-----------')
-
         await update({ userBusinesses: businesses })
-
-        // console.log(businesses, 'allBusinessData after-----------')
-
         toast.success('Business Created Successfully')
         setCreated(true)
         onTypeAdded?.()
@@ -178,7 +167,11 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        {mode === 'edit' ? 'Edit Business Information' : 'Add Business Information'}
+        {mode === 'edit'
+          ? 'Edit Business Information'
+          : mode === 'add'
+            ? 'Add Business Information'
+            : 'Business Details'}
         {mode === 'edit' && (
           <Typography component='span' className='flex flex-col text-center'>
             Updating Business details will receive a privacy audit.
@@ -198,18 +191,24 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 {...register('name', { required: 'Business Name is required' })}
                 error={!!errors.name}
                 helperText={errors.name?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <CustomTextField
                 label='Business Meta Id *'
                 fullWidth
-                // type='number'
+                type='number'
                 placeholder='Enter business Meta Id'
                 defaultValue={data?.business_id || ''}
                 {...register('business_id', { required: 'Business Meta Id is required' })}
                 error={!!errors.business_id}
                 helperText={errors.business_id?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -221,6 +220,9 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 {...register('business_desc', { required: 'Business description is required' })}
                 error={!!errors.business_desc}
                 helperText={errors.business_desc?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -232,6 +234,9 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 {...register('business_address', { required: 'Business address is required' })}
                 error={!!errors.business_address}
                 helperText={errors.business_address?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -249,6 +254,9 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 })}
                 error={!!errors.business_initial}
                 helperText={errors.business_initial?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -260,6 +268,9 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 {...register('contact_number', { required: 'Contact number is required' })}
                 error={!!errors.contact_number}
                 helperText={errors.contact_number?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
               />
             </Grid>
             {mode === 'add' && (
@@ -272,22 +283,30 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                   error={!!errors.currency}
                   helperText={errors.currency?.message}
                 >
-                  {currencies &&
+                  {currencies.length > 0 ? (
                     currencies.map(item => (
                       <MenuItem key={item.id} value={item.id}>
                         {item.label}
                       </MenuItem>
-                    ))}
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText primary='No business found' />
+                    </MenuItem>
+                  )}
                 </CustomTextField>
               </Grid>
             )}
-            {mode === 'edit' && (
+            {(mode === 'edit' || mode === 'view') && (
               <Grid item xs={12} sm={6}>
                 <CustomTextField
                   fullWidth
                   label='Currency *'
                   defaultValue={data?.currency?.label || ''}
-                  disabled={mode === 'edit'}
+                  // disabled={mode === 'edit'}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
                 />
               </Grid>
             )}
@@ -301,6 +320,9 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 {...register('business_type', { required: 'Business type is required' })}
                 error={!!errors.business_type}
                 helperText={errors.business_type?.message}
+                inputProps={{
+                  readOnly: mode === 'view'
+                }}
                 // disabled={mode === 'edit'}
               >
                 {[
@@ -343,9 +365,12 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
           </Grid>
         </DialogContent>
         <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16'>
-          <Button variant='contained' type='submit' disabled={loading}>
-            Submit
-          </Button>
+          {(mode === 'edit' || mode === 'add') && (
+            <Button variant='contained' type='submit' disabled={loading}>
+              Submit
+            </Button>
+          )}
+
           <Button variant='tonal' color='secondary' type='reset' onClick={handleClose}>
             Cancel
           </Button>

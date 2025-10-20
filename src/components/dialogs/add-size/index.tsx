@@ -22,8 +22,8 @@ import { getAllBusiness } from '@/api/business'
 import { createFoodType } from '@/api/foodTypes'
 import { ToppingDataType } from '@/api/interface/toppingInterface'
 import { BusinessType } from '@/api/interface/businessInterface'
-import { useAuthStore } from '@/store/authStore'
 import { ListItemText } from '@mui/material'
+import { useAuthStore } from '@/store/authStore'
 
 type TypeInfoProps = {
   open: boolean
@@ -32,9 +32,8 @@ type TypeInfoProps = {
   onTypeAdded?: any
 }
 
-const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
+const AddProductSizeModal = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const { businessData } = useAuthStore()
 
   const {
     register,
@@ -42,6 +41,8 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
     formState: { errors },
     reset
   } = useForm<ToppingDataType>()
+
+  const { businessData } = useAuthStore()
 
   const handleClose = () => {
     setOpen(false)
@@ -84,7 +85,7 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
         <i className='tabler-x' />
       </DialogCloseButton>
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Add Type
+        Add Size
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
@@ -92,9 +93,9 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
             <Grid item xs={12} sm={6}>
               <CustomTextField
                 fullWidth
-                label='Type Name *'
+                label='Size *'
                 {...register('name', {
-                  required: 'Type Name is required'
+                  required: 'Size is required'
                 })}
                 error={!!errors.name}
                 helperText={errors.name?.message}
@@ -108,7 +109,7 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
                 select
                 fullWidth
                 id='business'
-                label='Business'
+                label='Business Id *'
                 {...register('business', {
                   required: 'Business ID is required'
                 })}
@@ -161,4 +162,4 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
   )
 }
 
-export default AddType
+export default AddProductSizeModal

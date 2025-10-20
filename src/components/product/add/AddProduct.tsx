@@ -19,8 +19,6 @@ import CustomTextField from '@core/components/mui/TextField'
 import { MenuDataType } from '@/api/interface/menuIterface'
 import { createMenu } from '@/api/menu'
 import toast from 'react-hot-toast'
-import { getAllBusiness } from '@/api/business'
-
 import { ToppingDataType } from '@/api/interface/toppingInterface'
 import { getAllFoodTypesOfSpecificBusiness } from '@/api/foodTypes'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
@@ -29,6 +27,7 @@ import type { ThemeColor } from '@core/types'
 import Loader from '@/components/loader/Loader'
 import AddType from '@/components/dialogs/add-type'
 import { BusinessType } from '@/api/interface/businessInterface'
+import { ListItemText } from '@mui/material'
 
 type AddProductFormProps = {
   open: boolean
@@ -45,10 +44,8 @@ const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['
 })
 
 const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormProps) => {
-  // console.log(businesses, 'businesses000000000000')
-
   const [loading, setLoading] = useState<boolean>(false)
-  const [userBusinessData, setUserBusinessData] = useState<BusinessType[]>([])
+
   const [FoodTypeData, setFoodTypeData] = useState<ToppingDataType[]>([])
   const [addType, setAddType] = useState<boolean>(false)
 
@@ -78,7 +75,7 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
   }, [addType, businessId])
 
   const handleBusinessChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const selectedBusiness = userBusinessData.find(b => b.id === event.target.value)
+    const selectedBusiness = businesses.find(b => b.id === event.target.value)
     if (selectedBusiness) {
       setBusinessId(selectedBusiness.business_id) // Store business.business_id in state
     } else {
@@ -87,7 +84,7 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
   }
 
   // States
-  const onSubmit = (data: MenuDataType, e: any) => {
+  const onSubmitProduct = (data: MenuDataType, e: any) => {
     e.preventDefault()
     setLoading(true)
     setAddType(false)
@@ -104,7 +101,7 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
       image_link: data.image_link,
       link: data.link,
       price: data.price,
-      purchase_price: data.purchase_price,
+      sale_price: data.sale_price,
       sku: data.sku,
       type: data.type
     }
@@ -158,7 +155,10 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
         Add Product Information
       </DialogTitle>
       <div>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form
+          // onSubmit={handleSubmit(onSubmit)}
+          onSubmit={e => e.preventDefault()}
+        >
           <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
             <Grid container spacing={5} alignItems='center'>
               <Grid item xs={12} sm={6}>
@@ -205,12 +205,17 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
                   helperText={errors.business?.message}
                   onChange={handleBusinessChange}
                 >
-                  {businesses &&
-                    businesses?.map(business => (
+                  {businesses.length > 0 ? (
+                    businesses.map(business => (
                       <MenuItem key={business.id} value={business.id}>
                         {business.business_id}
                       </MenuItem>
-                    ))}
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText primary='No business found' />
+                    </MenuItem>
+                  )}
                 </CustomTextField>
               </Grid>
 
@@ -230,12 +235,12 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
 
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Price *'
+                  label='Purchase Price *'
                   fullWidth
                   type='number'
-                  placeholder='Enter price'
+                  placeholder='Enter purchase price'
                   {...register('price', {
-                    required: 'Price is required'
+                    required: 'Purchase Price is required'
                     // pattern: {
                     //   value: /^(?:\s*(Rs|₨|PKR|\$|USD)?\s*\d{1,3}(?:[,.]?\d{3})*(?:\.\d{1,2})?\s*(Rs|₨|PKR|\$|USD)?)$/i,
                     //   message:
@@ -251,22 +256,22 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
               </Grid>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Purchase Price *'
+                  label='Sale Price *'
                   fullWidth
                   type='number'
-                  placeholder='Enter Purchase  price '
-                  {...register('purchase_price', {
-                    required: 'Purchase Price is required'
+                  placeholder='Enter Sale  price '
+                  {...register('sale_price', {
+                    required: 'Sale Price is required'
                     // pattern: {
                     //   value: /^(?:\s*(Rs|₨|PKR|\$|USD)?\s*\d{1,3}(?:[,.]?\d{3})*(?:\.\d{1,2})?\s*(Rs|₨|PKR|\$|USD)?)$/i,
                     //   message:
                     //     'Please enter a valid price in PKR or USD (e.g., Rs 1999, $5000, 1000 PKR, ₨120000, 1,000 USD)'
                     // }
                   })}
-                  error={!!errors.purchase_price}
-                  helperText={errors.purchase_price?.message}
+                  error={!!errors.sale_price}
+                  helperText={errors.sale_price?.message}
                   InputLabelProps={{
-                    className: errors.purchase_price && 'requiredFieldError'
+                    className: errors.sale_price && 'requiredFieldError'
                   }}
                 />
               </Grid>
@@ -354,7 +359,7 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
               )}
             </Grid>
             <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16 mt-5'>
-              <Button variant='contained' type='submit' disabled={loading}>
+              <Button variant='contained' type='button' disabled={loading} onClick={handleSubmit(onSubmitProduct)}>
                 Submit
               </Button>
               <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>

@@ -15,25 +15,28 @@ import DialogActions from '@mui/material/DialogActions'
 // Component Imports
 import DialogCloseButton from '@components/dialogs/DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import { MenuDataType } from '@/api/interface/menuIterface'
-
 import toast from 'react-hot-toast'
 import Loader from '@/components/loader/Loader'
-import { createSize } from '@/api/size'
-import { SizeDataTypeWithoutId } from '@/api/interface/sizeInterface'
+import { updateMenuSize } from '@/api/size'
+import { SizeDataType } from '@/api/interface/sizeInterface'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type AddProductFormSizeProps = {
   open: boolean
   setOpen: (open: boolean) => void
-  data?: MenuDataType
+  menuSizeItemData?: SizeDataType
   onTypeAdded?: any
+  mode: 'add' | 'edit' | 'view'
   onCreateSize: (isCreated: boolean) => void
 }
 
-const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddProductFormSizeProps) => {
+const AddEditProductSize = ({ open, setOpen, menuSizeItemData, onTypeAdded, mode }: AddProductFormSizeProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const [addSizeFlag, setAddSizeFlag] = useState<boolean>(false)
-  const [selectedBusinessMenu, setSelectedBusinessMenu] = useState<boolean>(false)
+
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<SizeDataType | null>(null)
+
+  const menuSizeId: number = menuSizeItemData?.id ?? 0
 
   const {
     register,
@@ -41,63 +44,33 @@ const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddP
     formState: { errors },
     reset,
     setValue
-  } = useForm<SizeDataTypeWithoutId>()
+  } = useForm<SizeDataType>()
 
-  const onSubmit = (data: SizeDataTypeWithoutId, e: any) => {
+  const onSubmit = (data: SizeDataType, e: any) => {
     e.preventDefault()
 
-    onCreateSize(false)
-    setAddSizeFlag(false)
+    if (mode === 'edit') {
+      setPayloadData(data)
+      setOpenConfirmation(true)
+    }
+  }
 
-    if (selectedBusinessMenu === null) {
-      toast.error('Please select a business menu')
-      return
-    }
-    if (!data?.business) {
-      toast.error('Please select a business menu to proceed')
-      return
-    }
-    if (!data?.type) {
-      toast.error('Please select a business to proceed')
-      return
-    }
+  const handleConfirm = async () => {
+    if (!payloadData) return
+    try {
+      setLoading(true)
+      await updateMenuSize(menuSizeId, payloadData)
+      toast.success('Product Size Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (err: any) {
+      console.log(err, 'error updating Menu Sizetlet')
 
-    const payload = {
-      name: data?.name,
-      additional_price: data?.additional_price,
-      description: data?.description,
-      business: data?.business,
-      menu: data?.menu,
-      type: data?.type
+      toast.error(err?.data?.message || 'Error updating Menu Size')
+    } finally {
+      setLoading(false)
+      setOpen(false)
     }
-
-    setLoading(true)
-    createSize(payload)
-      .then(res => {
-        toast.success('Size saved successfully')
-        onCreateSize(true)
-        setAddSizeFlag(true)
-        reset()
-        setValue('menu', 0, { shouldValidate: true })
-        setValue('business', 0, { shouldValidate: true })
-        setValue('type', 0, { shouldValidate: true })
-        setSelectedBusinessMenu(false)
-      })
-      .catch(error => {
-        console.log(error?.data, 'Size create error')
-        if (error?.data && error?.data?.non_field_errors?.[0]) {
-          toast.error(error?.data?.non_field_errors[0])
-        } else if (error?.data && error?.data?.additional_price?.[0]) {
-          toast.error(error?.data?.additional_price[0])
-        } else if (error?.data && error?.data?.business?.[0]) {
-          toast.error(error?.data?.business[0])
-        } else {
-          toast.error('Error in creating Size')
-        }
-      })
-      .finally(() => {
-        setLoading(false)
-      })
   }
 
   const handleReset = () => {
@@ -106,13 +79,19 @@ const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddP
   }
 
   return (
-    <Dialog fullWidth open={open} maxWidth='md' scroll='body' sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+    <Dialog
+      open={open}
+      // maxWidth='md'
+      // fullWidth
+      scroll='body'
+      sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
+    >
       <DialogCloseButton onClick={() => setOpen(false)} disableRipple>
         <i className='tabler-x' />
       </DialogCloseButton>
 
       <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-16 sm:pbe-6 sm:pli-16'>
-        Add Product Size Information
+        {mode === 'edit' ? 'Edit Product Size Information' : 'Product Size Details'}
       </DialogTitle>
       <div>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -120,27 +99,35 @@ const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddP
             <Grid container spacing={5} alignItems='center'>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Name *'
+                  label='Size'
                   fullWidth
-                  placeholder='Enter  Name'
-                  {...register('name', { required: 'Name is required' })}
+                  placeholder='Enter  Size'
+                  {...register('name', { required: 'Size is required' })}
+                  defaultValue={menuSizeItemData && menuSizeItemData?.name}
                   error={!!errors.name}
                   helperText={errors.name?.message}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Description *'
+                  label='Description'
                   fullWidth
                   placeholder='Enter Description'
                   {...register('description', { required: 'Description is required' })}
                   error={!!errors.description}
                   helperText={errors.description?.message}
+                  defaultValue={menuSizeItemData && menuSizeItemData?.description}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <CustomTextField
-                  label='Price *'
+                  label='Price'
                   fullWidth
                   placeholder='Enter Price'
                   {...register('additional_price', {
@@ -153,13 +140,30 @@ const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddP
                   })}
                   error={!!errors.additional_price}
                   helperText={errors.additional_price?.message}
+                  defaultValue={menuSizeItemData && menuSizeItemData?.additional_price}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <CustomTextField
+                  label='Product'
+                  fullWidth
+                  defaultValue={menuSizeItemData && menuSizeItemData?.menu?.title}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
                 />
               </Grid>
             </Grid>
             <DialogActions className='justify-center pbs-0 sm:pbe-16 sm:pli-16 mt-5'>
-              <Button variant='contained' type='submit' disabled={loading}>
-                Submit
-              </Button>
+              {mode === 'edit' && (
+                <Button variant='contained' type='submit' disabled={loading}>
+                  Submit
+                </Button>
+              )}
+
               <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>
                 Cancel
               </Button>
@@ -168,9 +172,18 @@ const AddProductSize = ({ open, setOpen, data, onTypeAdded, onCreateSize }: AddP
             {loading && <Loader />}
           </DialogContent>
         </form>
+        {mode === 'edit' && (
+          <UpdateConfirmationDialog
+            openConfirmation={openConfirmation}
+            onClose={() => setOpenConfirmation(false)}
+            onConfirm={handleConfirm}
+            title='Edit Product Size'
+            description='Are you sure you want to edit this product size?'
+          />
+        )}{' '}
       </div>
     </Dialog>
   )
 }
 
-export default AddProductSize
+export default AddEditProductSize

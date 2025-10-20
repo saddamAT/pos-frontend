@@ -65,19 +65,9 @@ export async function deleteWhatsApp(id: string): Promise<any> {
     }
   }
 }
-export async function getWhatsAppById(id: number): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.whatsapp}`
-    const response = await GETBYID(url, id)
 
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching whatsapp data')
-    }
-  }
+export async function getWhatsAppById(id: number): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getwhatsAppBaseUrl()}/${id}/`)
 }
 
 export async function getWhatsAppQRByContact(params: any): Promise<any> {

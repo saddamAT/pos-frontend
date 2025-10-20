@@ -1,15 +1,13 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
+import { useState, useMemo, useEffect } from 'react'
+
 import Card from '@mui/material/Card'
-import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Checkbox from '@mui/material/Checkbox'
 import TablePagination from '@mui/material/TablePagination'
 import MenuItem from '@mui/material/MenuItem'
-import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { useSession } from 'next-auth/react'
 
@@ -26,7 +24,7 @@ import {
 } from '@tanstack/react-table'
 
 import { rankItem, type RankingInfo } from '@tanstack/match-sorter-utils'
-import { deleteBusiness, getAllBusiness } from '@/api/business'
+import { deleteBusiness } from '@/api/business'
 import type { BusinessTypeForFile } from '@/api/interface/businessInterface'
 import { useAuthStore } from '@/store/authStore'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
@@ -35,8 +33,6 @@ import TablePaginationComponent from '@/components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import tableStyles from '@core/styles/table.module.css'
 import Loader from '@/components/loader/Loader'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
 import { getUserBusinessesById } from '@/api/user'
 import AddEditBusiness from '@/components/business/add/AddEditBusiness'
 import { CurrencyDataType } from '@/api/interface/currencyInterface'
@@ -69,10 +65,13 @@ const BusinessListTable = ({
   tableData?: BusinessTypeForFile[]
   currencies: CurrencyDataType[]
 }) => {
-  const { lang: locale } = useParams() as { lang: Locale }
   const { data: session, update } = useSession()
+
+  const selectedOutletId = session?.user?.selectedOutlet?.business
+
   const userSession = useSession()
-  const userId = userSession?.data?.user?.id!
+  // const userId = userSession?.data?.user?.id!
+  const userId = userSession?.data?.user?.id ?? 0
   // if (!userSession?.data?.user?.id) {
   //   throw new Error('User ID missing')
   // }
@@ -83,13 +82,29 @@ const BusinessListTable = ({
   const [globalFilter, setGlobalFilter] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const { businessAction, businessData } = useAuthStore()
+  const { businessData, businessAction } = useAuthStore()
+
+  useEffect(() => {
+    if (userId) {
+      fetchAllBusiness()
+    }
+  }, [userId]) // Watch userId for changes
+
+  // Set the data when the businessData or tableData changes
+  useEffect(() => {
+    if (businessData && businessData.length > 0) {
+      setData(businessData)
+    } else if (tableData && tableData.length > 0) {
+      setData(tableData)
+      businessAction(tableData) // Update store with prop data
+    }
+  }, [tableData, businessData, businessAction])
 
   const fetchAllBusiness = async () => {
     try {
       setLoading(true)
-      const response = await getAllBusiness()
-      const updatedData = response?.data?.results ?? []
+      const response = await getUserBusinessesById(userId)
+      const updatedData = response?.data ?? []
       setData(updatedData)
       businessAction(updatedData)
     } catch (error) {
@@ -99,28 +114,26 @@ const BusinessListTable = ({
     }
   }
 
-  // useEffect(() => {
-  //   refreshData()
-  // }, [editBusinessFlag, deleteBusinessOpen])
-
-  const handleTypeAdded = () => {
-    fetchAllBusiness()
-    // setEditBusinessFlag(true)
+  const handleTypeAdded = async () => {
+    await fetchAllBusiness()
   }
 
   const handleDeleteConfirmed = async (id: number) => {
     setLoading(true)
+
     try {
       await deleteBusiness(id.toString())
       toast.success('Business deleted successfully')
-      // await refreshData()
-      fetchAllBusiness()
-      // const response = await getAllBusiness()
-      // const updatedData = response?.data?.results ?? []
+
+      const updatedData = data.filter(business => business.id !== id)
+      setData(updatedData)
+
+      businessAction(updatedData)
+
       const response = await getUserBusinessesById(userId)
       const businesses = response?.data ?? []
+
       await update({ userBusinesses: businesses })
-      // setDeleteBusinessOpen(true)
     } catch (error: any) {
       toast.error(error?.data?.detail || 'Error in deleting business')
     } finally {
@@ -154,11 +167,12 @@ const BusinessListTable = ({
       columnHelper.accessor('id', {
         header: 'ID',
         cell: ({ row }) => (
-          <Typography component={Link} href={getLocalizedUrl(`/business/${row.original.id}`, locale)} color='primary'>
+          <Typography className='capitalize' color='text.primary'>
             {row.original.id}
           </Typography>
         )
       }),
+
       columnHelper.accessor('name', {
         header: 'Business Name',
         cell: info => <Typography>{info.getValue()}</Typography>
@@ -186,30 +200,69 @@ const BusinessListTable = ({
       columnHelper.accessor('action', {
         header: 'Action',
         enableSorting: false,
-        cell: ({ row }) => (
-          <div className='flex gap-2'>
-            <OpenDialogOnElementClick
-              element={Button}
-              elementProps={{ children: <i className='tabler-trash text-xl' />, color: 'error' }}
-              dialog={ConfirmationDialog}
-              onConfirm={() => handleDeleteConfirmed(row.original.id)}
-              dialogProps={{ type: 'delete' }}
-            />
-            <OpenDialogOnElementClick
-              element={Button}
-              elementProps={{ children: 'Edit', color: 'primary', variant: 'contained' }}
-              dialog={AddEditBusiness}
-              onTypeAdded={handleTypeAdded}
-              dialogProps={{
-                mode: 'edit',
-                data: businessData.find((item: any) => item.id === row?.original?.id)
-              }}
-            />
-          </div>
-        )
+        cell: ({ row }) => {
+          const rowId = row.original.id as number
+          const rowIsActive = String(selectedOutletId ?? '') === String(rowId ?? '')
+          return (
+            <div className='flex gap-2'>
+              <div>
+                <OpenDialogOnElementClick
+                  element={Button}
+                  elementProps={{
+                    className: 'table-delete-icon',
+                    children: <i className='tabler-eye text-textSecondary' />
+                  }}
+                  dialog={AddEditBusiness}
+                  onTypeAdded={handleTypeAdded}
+                  dialogProps={{
+                    mode: 'view',
+                    data: businessData.find((item: any) => item.id === row?.original?.id)
+                  }}
+                />
+              </div>
+              <div>
+                <OpenDialogOnElementClick
+                  element={Button}
+                  elementProps={{ children: 'Edit', color: 'primary', variant: 'contained' }}
+                  dialog={AddEditBusiness}
+                  onTypeAdded={handleTypeAdded}
+                  dialogProps={{
+                    mode: 'edit',
+                    data: businessData.find((item: any) => item.id === row?.original?.id)
+                  }}
+                />
+              </div>
+              <div>
+                {/* <Tooltip
+                  title={
+                    rowIsActive
+                      ? 'You cant delete the business currently in use. Please switch to another branch first'
+                      : ''
+                  }
+                > */}
+                <OpenDialogOnElementClick
+                  element={Button}
+                  elementProps={{
+                    children: <i className='tabler-trash text-xl' />,
+                    color: rowIsActive ? 'primary' : 'error',
+                    disabled: rowIsActive,
+                    title: rowIsActive
+                      ? "You can't delete the business currently in use. Please switch to another branch first."
+                      : 'Delete Business',
+                    sx: { opacity: rowIsActive ? 0.5 : 1 }
+                  }}
+                  dialog={ConfirmationDialog}
+                  onConfirm={() => handleDeleteConfirmed(row.original.id)}
+                  dialogProps={{ type: 'delete' }}
+                />
+                {/* </Tooltip> */}
+              </div>
+            </div>
+          )
+        }
       })
     ],
-    [data]
+    [data, selectedOutletId]
   )
 
   const table = useReactTable({

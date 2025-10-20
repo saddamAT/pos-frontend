@@ -2,8 +2,6 @@
 
 // React Imports
 import { useEffect, useState, useMemo } from 'react'
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
 import Card from '@mui/material/Card'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
@@ -13,7 +11,6 @@ import type { TextFieldProps } from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import toast from 'react-hot-toast'
 import type { ButtonProps } from '@mui/material/Button'
-
 import classnames from 'classnames'
 import { rankItem } from '@tanstack/match-sorter-utils'
 import {
@@ -30,26 +27,18 @@ import {
 } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
-
 // Type Imports
 import type { ThemeColor } from '@core/types'
-
 // Component Imports
-
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
-
 import tableStyles from '@core/styles/table.module.css'
-
 import Loader from '@/components/loader/Loader'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
 import { useAuthStore } from '@/store/authStore'
-import AddFeedToGptDrawer from '../add/AddFeedToGptDrawer'
 import { deleteFeedToGPT, getFeedToChatGpt } from '@/api/feedToChatGPT'
 import { FeedToChatGptFileType } from '@/api/interface/interfaceFeedToGPT'
 import EditFeedGptInfo from '@/components/dialogs/edit-feedgpt-info'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import { BusinessType } from '@/api/interface/businessInterface'
 declare module '@tanstack/table-core' {
@@ -112,21 +101,15 @@ const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['
 const columnHelper = createColumnHelper<FeedToGptTypeWithAction>()
 
 const FeedToGptListTable = ({
-  tableData,
-  businesses
+  tableData
+  // businesses
 }: {
   tableData?: FeedToChatGptFileType[]
-  businesses: BusinessType[]
+  // businesses: BusinessType[]
 }) => {
-  const router = useRouter()
-  const { lang: locale } = useParams() as { lang: Locale }
-  const { feedgptAction, feedgptData } = useAuthStore()
-  const [addUserOpen, setAddUserOpen] = useState(false)
-
+  const { feedgptAction, feedgptData, businessData } = useAuthStore()
   const [deleteFeedToGptOpen, setDeleteFeedToGptOpen] = useState(false)
-
   const [rowSelection, setRowSelection] = useState({})
-
   const [data, setData] = useState<FeedToChatGptFileType[]>(tableData || [])
   const [globalFilter, setGlobalFilter] = useState('')
   const [editFeedToGptFlag, setEditFeedToGptFlag] = useState(false)
@@ -153,7 +136,7 @@ const FeedToGptListTable = ({
 
   useEffect(() => {
     fetchFeedToChatGpt()
-  }, [addUserOpen, deleteFeedToGptOpen, editFeedToGptFlag])
+  }, [deleteFeedToGptOpen, editFeedToGptFlag])
 
   const handleTypeAdded = () => {
     fetchFeedToChatGpt()
@@ -161,6 +144,7 @@ const FeedToGptListTable = ({
   }
 
   const handleDeleteGpt = (id: number) => {
+    setDeleteFeedToGptOpen(false)
     deleteFeedToGPT(id.toString())
       .then(res => {
         toast.success('Feed To Gpt deleted successfully')
@@ -205,13 +189,15 @@ const FeedToGptListTable = ({
         )
       },
       columnHelper.accessor('id', {
-        header: '#',
+        header: ' #',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/feedtogpt/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >{`${row.original.id}`}</Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
       columnHelper.accessor('business', {
@@ -273,22 +259,25 @@ const FeedToGptListTable = ({
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
-                  children: <i className='tabler-trash text-[22px]' />
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
                 }}
-                dialog={ConfirmationDialog}
-                onConfirm={() => row.original.id && handleDeleteGpt(row.original.id)}
-                dialogProps={{ type: 'delete' }}
+                dialog={EditFeedGptInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: feedgptData.find((item: any) => item.id === row?.original?.id),
+                  businessData
+                }}
               />
             </div>
-
-            <div className='flex gap-4 justify-center'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={buttonProps('Edit', 'primary', 'contained')}
@@ -297,8 +286,21 @@ const FeedToGptListTable = ({
                 dialogProps={{
                   mode: 'edit',
                   data: feedgptData.find((item: any) => item.id === row?.original?.id),
-                  businesses: businesses
+                  businesses: businessData
                 }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteGpt(row.original.id)}
+                dialogProps={{ type: 'delete' }}
               />
             </div>
           </div>
@@ -361,14 +363,16 @@ const FeedToGptListTable = ({
               className='is-full sm:is-auto'
             />
 
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddUserOpen(!addUserOpen)}
-              className='is-full sm:is-auto'
-            >
-              Feed To Gpt
-            </Button>
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Feed To Gpt', variant: 'contained' }}
+              dialog={EditFeedGptInfo}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businessData
+              }}
+            />
           </div>
         </div>
 
@@ -431,8 +435,6 @@ const FeedToGptListTable = ({
           }}
         />
       </Card>
-
-      <AddFeedToGptDrawer open={addUserOpen} handleClose={() => setAddUserOpen(!addUserOpen)} businesses={businesses} />
     </>
   )
 }

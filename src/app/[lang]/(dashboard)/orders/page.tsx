@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 
 const OrdersPage = async ({ params }: Props) => {
   const session = await getServerSession(authOptions)
+  console.log(session?.accessToken, 'token')
 
   if (!session?.accessToken) {
     redirect(`/${params.lang}/login`)

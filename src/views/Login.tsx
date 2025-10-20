@@ -1,13 +1,13 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
+// React
+import { useMemo, useState } from 'react'
 
-// Next Imports
+// Next / Forms
 import { useParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 
-// MUI Imports
+// MUI
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
@@ -16,35 +16,29 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
+
+// Utils / Types
 import { getLocalizedUrl } from '@/utils/i18n'
 import type { Locale } from '@configs/i18n'
-
-// Third-party Imports
 import classnames from 'classnames'
-
-// Type Imports
 import toast from 'react-hot-toast'
-
 import type { SystemMode } from '@core/types'
 
-// Component Imports
+// Components
 import Link from '@components/Link'
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
+import Loader from '@/components/loader/Loader'
 
-// Config Imports
+// Config & Hooks
 import themeConfig from '@configs/themeConfig'
-
-// Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 
-import type { LoginUser } from '@/api/interface/userInterface'
+// Auth
+import { signIn, useSession } from 'next-auth/react'
 
-import Loader from '@/components/loader/Loader'
-import { signIn } from 'next-auth/react'
-
-// Vars
+// Images
 const darkImg = '/images/pages/auth-mask-dark.png'
 const lightImg = '/images/pages/auth-mask-light.png'
 const darkIllustration = '/images/illustrations/auth/v2-login-dark.png'
@@ -52,19 +46,15 @@ const lightIllustration = '/images/illustrations/auth/v2-login-light.png'
 const borderedDarkIllustration = '/images/illustrations/auth/v2-login-dark-border.png'
 const borderedLightIllustration = '/images/illustrations/auth/v2-login-light-border.png'
 
-// Styled Custom Components
+// Styled
 const LoginIllustration = styled('img')(({ theme }) => ({
   zIndex: 2,
   blockSize: 'auto',
   maxBlockSize: 680,
   maxInlineSize: '100%',
   margin: theme.spacing(12),
-  [theme.breakpoints.down(1536)]: {
-    maxBlockSize: 550
-  },
-  [theme.breakpoints.down('lg')]: {
-    maxBlockSize: 450
-  }
+  [theme.breakpoints.down(1536)]: { maxBlockSize: 550 },
+  [theme.breakpoints.down('lg')]: { maxBlockSize: 450 }
 }))
 
 const MaskImg = styled('img')({
@@ -76,52 +66,25 @@ const MaskImg = styled('img')({
   zIndex: -1
 })
 
+// Domain types
+import type { LoginUser } from '@/api/interface/userInterface'
+// import PostLoginModal, { UserBusiness } from '@/components/business/modal/PostLoginModal'
+
 const Login = ({ mode }: { mode: SystemMode }) => {
-  const [loading, setLoading] = useState<boolean>(false)
-
-  const { lang: locale } = useParams() as { lang: Locale }
-  const [isRememberMeChecked, setIsRememberMeChecked] = useState<boolean>(false)
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<LoginUser>()
-
-  const onSubmit = async (data: LoginUser, e: any) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const res = await signIn('credentials', {
-      email: data.email,
-      password: data.password,
-      redirect: false
-    })
-    setLoading(false)
-
-    if (res && res.ok && res.error === null) {
-      toast.success('User LoggedIn Successfully.')
-
-      router.replace(getLocalizedUrl('/home', locale))
-    } else {
-      if (res?.error) {
-        toast.error(res.error)
-      }
-    }
-  }
-
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
-
-  // States
+  const [loading, setLoading] = useState(false)
+  const [isRememberMeChecked, setIsRememberMeChecked] = useState(false)
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  // const [showPostLogin, setShowPostLogin] = useState(false)
 
-  // Hooks
+  // const { data: session } = useSession()
+  // console.log(session, 'session---876342')
+
   const router = useRouter()
+  const { lang: locale } = useParams() as { lang: Locale }
   const { settings } = useSettings()
   const theme = useTheme()
   const hidden = useMediaQuery(theme.breakpoints.down('md'))
   const authBackground = useImageVariant(mode, lightImg, darkImg)
-
   const characterIllustration = useImageVariant(
     mode,
     lightIllustration,
@@ -130,14 +93,105 @@ const Login = ({ mode }: { mode: SystemMode }) => {
     borderedDarkIllustration
   )
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginUser>()
+
+  // pull businesses from session safely
+  // const businesses = (session?.user?.userBusinesses ?? []) as UserBusiness[]
+
+  // Default selection: first business w/ outlet -> first outlet
+  // const firstBizWithOutlet = useMemo(
+  //   () => businesses.find(b => (b.user_business?.length ?? 0) > 0) || null,
+  //   [businesses]
+  // )
+  // const initialSelected = {
+  //   businessId: firstBizWithOutlet?.id ?? null,
+  //   outletId: firstBizWithOutlet?.user_business?.[0]?.id ?? null
+  // }
+
+  // const onSubmit = async (data: LoginUser) => {
+  //   try {
+  //     setLoading(true)
+  //     const res = await signIn('credentials', {
+  //       email: data.email,
+  //       password: data.password,
+  //       redirect: false
+  //     })
+  //     setLoading(false)
+
+  //     if (res && res.ok && res.error === null) {
+  //       toast.success('Logged in successfully.')
+  //       router.replace(getLocalizedUrl('/home?postLogin=1', locale))
+  //       // setShowPostLogin(true) // open modal, not redirecting immediately
+  //     } else {
+  //       console.log(res?.error, 'error---->')
+
+  //       toast.error(res?.error || 'Login failed')
+  //     }
+  //   } catch {
+  //     setLoading(false)
+  //     toast.error('Something went wrong while logging in')
+  //   }
+  // }
+
+  const onSubmit = async (data: LoginUser) => {
+    try {
+      setLoading(true)
+      const res = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false
+      })
+      setLoading(false)
+
+      if (res && res.ok && res.error === null) {
+        toast.success('Logged in successfully.')
+        router.replace(getLocalizedUrl('/home?postLogin=1', locale))
+      } else {
+        // Try to parse error message
+        let errorMessage = 'Login failed'
+
+        if (res?.error) {
+          try {
+            // If error is a JSON string
+            const parsed = JSON.parse(res.error)
+            if (parsed.non_field_errors && parsed.non_field_errors.length > 0) {
+              errorMessage = parsed.non_field_errors[0]
+            } else {
+              errorMessage = res.error
+            }
+          } catch {
+            // If error is plain string
+            errorMessage = res.error
+          }
+        }
+
+        toast.error(errorMessage)
+      }
+    } catch {
+      setLoading(false)
+      toast.error('Something went wrong while logging in')
+    }
+  }
+
+  const handleClickShowPassword = () => setIsPasswordShown(s => !s)
+
+  // When user confirms selection in the modal
+  // const handleConfirmSelection = (sel: { businessId: number | null; outletId: number | null }) => {
+  //   const qp = sel.businessId && sel.outletId ? `?business=${sel.businessId}&outlet=${sel.outletId}` : ''
+  //   // Go to dashboard with selection
+  //   router.replace(getLocalizedUrl(`/home${qp}`, locale))
+  // }
+
   return (
     <div className='flex bs-full justify-center'>
       <div
         className={classnames(
           'flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6 max-md:hidden',
-          {
-            'border-ie': settings.skin === 'bordered'
-          }
+          { 'border-ie': settings.skin === 'bordered' }
         )}
       >
         <LoginIllustration src={characterIllustration} alt='character-illustration' />
@@ -149,25 +203,29 @@ const Login = ({ mode }: { mode: SystemMode }) => {
           />
         )}
       </div>
+
       <div className='flex justify-center items-center bs-full bg-backgroundPaper !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[480px]'>
         <div className='absolute block-start-5 sm:block-start-[33px] inline-start-6 sm:inline-start-[38px]'>
           <Logo />
         </div>
+
         <div className='flex flex-col gap-6 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-11 sm:mbs-14 md:mbs-0'>
           <div className='flex flex-col gap-1'>
             <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
-            <Typography>Please sign-in to your account and start the adventure</Typography>
+            <Typography>Please sign in to start the adventure</Typography>
           </div>
+
           <form autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-5'>
             <CustomTextField
               autoFocus
               fullWidth
-              label='Email '
-              placeholder='Enter your email '
+              label='Email'
+              placeholder='Enter your email'
               {...register('email', { required: 'Email is required' })}
               error={!!errors.email}
               helperText={errors.email?.message}
             />
+
             <CustomTextField
               fullWidth
               label='Password'
@@ -187,6 +245,7 @@ const Login = ({ mode }: { mode: SystemMode }) => {
                 )
               }}
             />
+
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel
                 control={
@@ -200,19 +259,32 @@ const Login = ({ mode }: { mode: SystemMode }) => {
                 </Typography>
               </Link>
             </div>
+
             <Button fullWidth variant='contained' type='submit' disabled={loading}>
-              Login
+              {loading ? 'Logging in…' : 'Login'}
             </Button>
+
             <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>New on our platform?</Typography>
               <Link href={getLocalizedUrl('/register', locale)}>
                 <Typography color='primary'>Create an account</Typography>
               </Link>
             </div>
+
             {loading && <Loader />}
           </form>
         </div>
       </div>
+
+      {/* Post-login modal */}
+      {/* <PostLoginModal
+        open={showPostLogin}
+        onClose={() => setShowPostLogin(false)}
+        onSkip={() => router.replace(getLocalizedUrl('/home', locale))}
+        businesses={businesses}
+        initialSelected={initialSelected}
+        onConfirmSelection={handleConfirmSelection}
+      /> */}
     </div>
   )
 }

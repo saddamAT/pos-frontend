@@ -50,7 +50,7 @@ import { SizeDataType } from '@/api/interface/sizeInterface'
 import { getToppingSizeByBusinessId } from '@/api/toppings'
 import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
 import Loader from '@/components/loader/Loader'
-import AddProductSize from '../add/AddProductSize'
+import AddEditProductSize from '../add/AddEditProductSize'
 
 // Extend react-table with custom filter functions
 declare module '@tanstack/table-core' {
@@ -207,18 +207,18 @@ const SizeListTable = ({ isCreated, id }: PreviewProps) => {
       columnHelper.accessor('id', {
         header: 'Id',
         cell: ({ row }) => (
-          <Typography
-            component={Link}
-            href={getLocalizedUrl(`/products/size/details/${row.original.id}`, locale as Locale)}
-            color='primary'
-          >
-            {`${row.original.id}`}
-          </Typography>
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
         )
       }),
 
       columnHelper.accessor('name', {
-        header: 'Name',
+        header: 'Size',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <div className='flex flex-col'>
@@ -259,35 +259,58 @@ const SizeListTable = ({ isCreated, id }: PreviewProps) => {
           </Typography>
         )
       }),
+      // columnHelper.accessor('type', {
+      //   header: 'Type',
+      //   cell: ({ row }) => (
+      //     <Typography className='capitalize' color='text.primary'>
+      //       {row.original.type?.name}
+      //     </Typography>
+      //   )
+      // }),
 
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
-          <div className='flex items-center'>
-            <div className='flex items-center'>
+          <div className='flex gap-2'>
+            <div>
               <OpenDialogOnElementClick
                 element={Button}
                 elementProps={{
                   className: 'table-delete-icon',
-                  color: 'error',
+                  children: <i className='tabler-eye text-textSecondary' />
+                }}
+                dialog={AddEditProductSize}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  menuSizeItemData: menuSizeData.find((item: any) => item.id === row?.original?.id)
+                }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={buttonProps('Edit', 'primary', 'contained')}
+                dialog={AddEditProductSize}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'edit',
+                  id: row.original.business,
+                  menuSizeItemData: menuSizeData.find((item: any) => item.id === row.original.id)
+                }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
                   children: <i className='tabler-trash text-[22px]' />
                 }}
                 dialog={ConfirmationDialog}
                 onConfirm={() => row.original.id && handleDeleteMenuSize(row.original.id)}
                 dialogProps={{ type: 'delete' }}
-              />
-            </div>
-            <div className='flex gap-4 justify-center'>
-              <OpenDialogOnElementClick
-                element={Button}
-                elementProps={buttonProps('Edit', 'primary', 'contained')}
-                dialog={AddProductSize}
-                onTypeAdded={handleTypeAdded}
-                dialogProps={{
-                  mode: 'edit',
-                  id: row.original.business,
-                  data: menuSizeData.find((item: any) => item.id === row.original.id)
-                }}
               />
             </div>
           </div>

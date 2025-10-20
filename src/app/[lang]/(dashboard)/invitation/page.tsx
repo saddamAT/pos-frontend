@@ -16,6 +16,7 @@ const PricePage = async () => {
     redirect('en/home')
   }
   const invitationResponse = await getUserInvitations()
+
   if (!invitationResponse?.success) {
     return <Typography>loading invitations</Typography>
   }

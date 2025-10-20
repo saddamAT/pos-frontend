@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Grid from '@mui/material/Grid'
-import { MenuItem } from '@mui/material'
+import { ListItemText, MenuItem } from '@mui/material'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import { useForm } from 'react-hook-form'
@@ -36,9 +36,7 @@ type Props = {
 
 const AddFaceBookDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Props) => {
   const [loading, setLoading] = useState<boolean>(false)
-
   const [isActive, setIsActive] = useState<boolean>(false)
-
   const router = useRouter()
   const { lang: locale } = useParams() as { lang: Locale }
 
@@ -81,7 +79,7 @@ const AddFaceBookDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Pro
         router.replace(getLocalizedUrl('/platforms', locale as Locale))
       })
       .catch(error => {
-        console.log(error, 'error in FeedWhatsApp')
+        console.log(error, 'error in creating facebook')
       })
       .finally(() => {
         setLoading(false)
@@ -131,12 +129,17 @@ const AddFaceBookDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Pro
                       className: errors.business ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {businesses &&
-                      businesses?.map(business => (
+                    {businesses.length > 0 ? (
+                      businesses.map(business => (
                         <MenuItem key={business.id} value={business.id}>
                           {business.business_id}
                         </MenuItem>
-                      ))}
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No business found' />
+                      </MenuItem>
+                    )}
                   </CustomTextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -154,12 +157,17 @@ const AddFaceBookDrawer = ({ open, handleClose, businesses, feedToChatGpt }: Pro
                       className: errors.feed_to_gpt ? 'requiredFieldError' : undefined
                     }}
                   >
-                    {feedToChatGpt &&
-                      feedToChatGpt?.map(feed => (
+                    {feedToChatGpt.length > 0 ? (
+                      feedToChatGpt.map(feed => (
                         <MenuItem key={feed.id} value={feed.id}>
                           {feed.name}
                         </MenuItem>
-                      ))}
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText primary='No Feed to gpt available' />
+                      </MenuItem>
+                    )}
                   </CustomTextField>
                 </Grid>
                 <Grid item xs={12} sm={6}>
