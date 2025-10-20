@@ -1,56 +1,35 @@
 'use client'
-
-// MUI Imports
 import { Card, CardContent, Typography, Grid, Divider, CircularProgress, Alert } from '@mui/material'
 
-// Component Imports
 import Logo from '@components/layout/shared/Logo'
-import OrderItemComponent from '@/components/OrderItemComponent'
-import PopularProducts from '@/components/PopularProducts'
+import OrderItemComponent from '@/components/order/OrderItemComponent'
 
-// Style Imports
-import tableStyles from '@core/styles/table.module.css'
-
-// React Imports
 import { useEffect, useState } from 'react'
 
-// Utility Imports
 import {
-  convertToPakistanDatePlus10Days,
   convertToPakistanDateWithoutTime,
   convertToPakistanTime,
   convertToPakistanTimePlusOneHourWithDate
 } from '@/utils/dateUtils'
 
-// Type Imports
 import { OrderItems, OrderUserObject } from '@/types/apps/orderTypes'
-import { BusinessDataTypeForAddBusiness } from '@/api/interface/businessInterface'
-import { OrderDataType, OrderItem } from '@/api/interface/orderInterface'
-
-// API Imports
 import { getOrderById } from '@/api/order'
-
 type PreviewOrderReturnDetailsProps = {
   id: string
 }
 
 const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
-  // State Hooks
   const [orderAddress, setOrderAddress] = useState<string | null>(null)
   const [orderStatus, setOrderStatus] = useState<string | null>(null)
   const [orderDeliveryType, setOrderDeliveryType] = useState<string | null>(null)
   const [orderCreatedDate, setOrderCreatedDate] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
   const [orderTotalPrice, setOrderTotalPrice] = useState<number | null>(0)
-  // total_price
+
   const [orderSpecialInstruction, setOrderSpecialInstruction] = useState<string | null>(null)
-
   const [orderItemsData, setOrderItemsData] = useState<OrderItems[]>([])
-  const [orderBusinessData, setOrderBusinessData] = useState<BusinessDataTypeForAddBusiness | null>(null)
   const [orderUserData, setOrderUserData] = useState<OrderUserObject | null>(null)
-
   const [totalAmount, setTotalAmount] = useState<number>(0)
-
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [currencySymbol, setCurrencySymbol] = useState('')
@@ -65,18 +44,16 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
         setOrderTotalPrice(response?.data?.total_price)
         setOrderUserData(data?.user || null)
         if (!data.is_pos && data.delivery_type === 'delivery') {
-          // Remove "Textinput " from the address field
           const refinedAddress = data.address.replace(/Textinput /g, '')
           setOrderAddress(refinedAddress)
         } else {
           setOrderAddress(data.address)
         }
-        // setOrderAddress(data?.address || null)
+
         setOrderStatus(data?.status || null)
         setOrderDeliveryType(data?.delivery_type || null)
         setOrderNumber(data?.order_number || null)
         setOrderItemsData(data?.order_items || [])
-        setOrderBusinessData(data?.business || null)
         setOrderCreatedDate(data?.created_at || null)
         setOrderSpecialInstruction(data?.special_instruction || null)
       } catch (error: any) {
@@ -93,8 +70,6 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
   useEffect(() => {
     const calculateTotal = () => {
       const sum = orderItemsData.reduce((acc, item) => {
-        /* changed total_price to net_price to fix the mismatched value */
-
         const itemTotal = item.quantity * parseFloat(item.net_price)
         return acc + itemTotal
       }, 0)
@@ -123,25 +98,24 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
     <Card>
       <CardContent className='sm:p-12'>
         <Grid container spacing={6}>
-          {/* Order Header */}
           <Grid item xs={12}>
             <div className='p-6 bg-actionHover rounded'>
-              <div className='flex justify-between gap-y-4 flex-col sm:flex-row'>
-                {/* Logo and Address */}
-                <div className='flex flex-col gap-6'>
-                  <div className='flex items-center gap-2.5'>
+              <div className='flex justify-between flex-col sm:flex-row'>
+                <div className='flex flex-col'>
+                  <div>
                     <Logo />
                   </div>
-                  {orderAddress && <Typography color='text.primary'>{orderAddress}</Typography>}
+                  <div className='ml-2'>
+                    {orderAddress && <Typography color='text.primary'>{orderAddress}</Typography>}
+                  </div>
                 </div>
-                {/* Order Number and Dates */}
-                <div className='flex flex-col gap-6'>
+
+                <div className='flex flex-col mt-3'>
                   {orderNumber && <Typography variant='h5'>{`Order Number #${orderNumber}`}</Typography>}
                   <div className='flex flex-col gap-1'>
                     {orderCreatedDate && (
                       <>
                         <Typography color='text.primary'>{`Date Issued: ${convertToPakistanDateWithoutTime(orderCreatedDate)}`}</Typography>
-                        {/* <Typography color='text.primary'>{`Date Due: ${convertToPakistanDatePlus10Days(orderCreatedDate)}`}</Typography> */}
                       </>
                     )}
                   </div>
@@ -150,10 +124,8 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
             </div>
           </Grid>
 
-          {/* Customer and Bill To Details */}
           <Grid item xs={12}>
             <Grid container spacing={6}>
-              {/* Invoice To */}
               <Grid item xs={12} sm={6}>
                 <div className='flex flex-col gap-4'>
                   <Typography className='font-medium' color='text.primary'>
@@ -169,7 +141,6 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
                 </div>
               </Grid>
 
-              {/* Bill To */}
               <Grid item xs={12} sm={6}>
                 <div className='flex flex-col gap-4'>
                   <div>
@@ -203,7 +174,6 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
             </Grid>
           </Grid>
 
-          {/* Order Items */}
           <Grid item xs={12}>
             <Grid container spacing={2}>
               {orderItemsData && orderItemsData.length > 0 ? (
@@ -252,12 +222,10 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
             </div>
           </Grid>
 
-          {/* Divider */}
           <Grid item xs={12}>
             <Divider className='border-dashed' />
           </Grid>
 
-          {/* Special Instructions */}
           <Grid item xs={12}>
             <Typography>
               <Typography component='span' className='font-medium' color='text.primary'>

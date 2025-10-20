@@ -13,7 +13,6 @@ type PageProps = {
 const InstagramPreview = ({ params }: PageProps) => {
   return (
     <Grid container spacing={6}>
-      {/* hello how are you */}
       <Grid item xs={6}>
         <InstagramDetails id={params.id} />
       </Grid>

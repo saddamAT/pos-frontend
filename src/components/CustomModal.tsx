@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -51,12 +50,10 @@ const CustomModal: React.FC<CustomModalProps> = ({
         '& .MuiDialog-paper': {
           width: '420px',
 
-          // height: '700px'
-          // height: loadingVerify ? '250px' : '280px'
           overflow: 'hidden'
         },
         '& .MuiDialogContent-root': {
-          overflow: 'hidden' // Additional measure to prevent scrolling within content area
+          overflow: 'hidden'
         },
         '& .MuiDialogContentText-root': { color: '#000000' }
       }}

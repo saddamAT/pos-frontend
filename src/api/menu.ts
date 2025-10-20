@@ -1,22 +1,25 @@
-import axios from 'axios'
-
-import type { MenuDataType, SyncMenuDataType } from './interface/menuIterface'
+import type { MenuDataType } from './interface/menuIterface'
 import { ENDPOINTS } from './vars/vars'
 import { GET, GETBYID, PATCH, POST, DELETE } from './api'
 
-export async function getAllMenues(): Promise<any> {
-  try {
-    const url = `whatseat/${ENDPOINTS.menus}/`
-    const response = await GET(url)
+import { apiRequest } from '@/utils/apiRequest'
 
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in fetching menus data')
-    }
-  }
+type GetApiResponse<T> = {
+  success?: boolean
+  data?: T
+  error?: string | object
+}
+
+const getProductsBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+
+  return `${apiUrl}/whatseat/${ENDPOINTS.menus}`
+}
+
+export async function getAllMenues(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getProductsBaseUrl()}/`)
 }
 
 export async function createMenu(data: MenuDataType): Promise<any> {

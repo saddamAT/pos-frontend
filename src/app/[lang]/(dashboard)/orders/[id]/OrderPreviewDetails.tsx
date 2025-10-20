@@ -6,19 +6,13 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import Divider from '@mui/material/Divider'
-
 // Component Imports
 import Logo from '@components/layout/shared/Logo'
-
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import { useEffect, useState } from 'react'
-import { OrderReturnDataType, ReturnItem } from '@/api/interface/orderReturnInterface'
-
 import { convertToPakistanDatePlus10Days, convertToPakistanDateWithoutTime } from '@/utils/dateUtils'
 import { OrderItems } from '@/types/apps/orderTypes'
-import { BusinessDataTypeForAddBusiness } from '@/api/interface/businessInterface'
-import { OrderDataType } from '@/api/interface/orderInterface'
 import { getOrderById } from '@/api/order'
 
 type PreviewOrderReturnDetailsProps = {
@@ -33,13 +27,11 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
   const [orderNumber, setOrderNumber] = useState<string | null>(null)
   const [orderSpecialInstruction, setOrderSpecialInstruction] = useState<string | null>(null)
   const [orderItemsData, setOrderItemsData] = useState<OrderItems[]>([])
-  const [orderTotalPrice, setOrderTotalPrice] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         const response = await getOrderById(Number(id))
-        setOrderTotalPrice(response?.data?.total_price)
         setOrderAddress(response?.data?.address)
         setOrderStatus(response?.data?.status)
         setOrderDeliveryType(response?.data?.delivery_type)
@@ -63,8 +55,7 @@ const OrderPreviewDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
               <div className='flex justify-between gap-y-4 flex-col sm:flex-row'>
                 <div className='flex flex-col gap-6'>
                   <div className='flex items-center gap-2.5'>
-                    {/* <Logo /> */}
-                    Sharjah 👠
+                    <Logo />
                   </div>
                   <div>
                     <Typography color='text.primary'>{orderAddress && orderAddress}</Typography>

@@ -62,7 +62,8 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/types/app/[lang]/(dashboard)/wa-templates/page.ts"
   ],
   "exclude": [
     "node_modules"

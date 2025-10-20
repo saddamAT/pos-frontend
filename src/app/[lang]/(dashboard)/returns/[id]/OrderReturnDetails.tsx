@@ -6,11 +6,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
 import Divider from '@mui/material/Divider'
-
-// Component Imports
 import Logo from '@components/layout/shared/Logo'
-
-// Style Imports
 import tableStyles from '@core/styles/table.module.css'
 import { useEffect, useState } from 'react'
 import { OrderReturnDataType, ReturnItem } from '@/api/interface/orderReturnInterface'
@@ -162,7 +158,7 @@ const OrderReturnDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
                         <td>
                           <Typography color='text.primary'>
                             {currencySymbol} {''}
-                            {item.total_price}
+                            {Number(item.total_price).toFixed(2)}
                           </Typography>
                         </td>
                       </tr>
@@ -217,7 +213,7 @@ const OrderReturnDetails = ({ id }: PreviewOrderReturnDetailsProps) => {
             <Typography>
               <Typography component='span' className='font-medium' color='text.primary'>
                 Note:
-              </Typography>{' '}
+              </Typography>
               It was a pleasure working with you and your team. We hope you will keep us in mind for future freelance
               projects. Thank You!
             </Typography>

@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import InputLabel from '@mui/material/InputLabel'
 import Button from '@mui/material/Button'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import CustomTextField from '@core/components/mui/TextField'
 import { OrderInterface } from '@/api/interface/menuIterface'
 import { searchOrder } from '@/api/order'
@@ -45,7 +45,7 @@ const RETURN_REASONS = [
 const AddReturnOrder: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false)
   const router = useRouter()
-  const { lang: locale } = useParams()
+  const { lang: locale } = useParams() as { lang: Locale }
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [searchResults, setSearchResults] = useState<OrderInterface[]>([])
   const [selectedOrder, setSelectedOrder] = useState<OrderInterface | null>(null)
@@ -161,6 +161,13 @@ const AddReturnOrder: React.FC = () => {
       return
     }
 
+    if (selectedOrder?.status !== 'confirmed') {
+      toast.error(
+        `This order cannot be returned because its status is "${selectedOrder?.status}". Only orders with status "confirmed" can be returned.`
+      )
+      return
+    }
+
     setLoading(true)
 
     const submissionData = {
@@ -170,6 +177,7 @@ const AddReturnOrder: React.FC = () => {
       delivery_type: selectedOrder?.delivery_type,
       address: selectedOrder?.delivery_type === 'pickup' ? 'no address' : selectedOrder?.address,
       special_instruction: selectedOrder?.special_instruction,
+      status: selectedOrder?.status,
       tax_price: 0,
       discount_price: 0,
       net_price: total,
@@ -270,7 +278,7 @@ const AddReturnOrder: React.FC = () => {
                           <CustomTextField
                             select
                             fullWidth
-                            label='Select Reason to Return'
+                            label='Reason to Return'
                             value={item.status}
                             onChange={e => handleStatusChange(item.id, e.target.value)}
                             variant='outlined'
@@ -283,7 +291,7 @@ const AddReturnOrder: React.FC = () => {
                             ))}
                           </CustomTextField>
                         </td>
-                        <td className='tdata'>${Number(item.total_price).toFixed(2)}</td>
+                        <td className='tdata'>{Number(item.total_price).toFixed(2)}</td>
                         <td className='tdata'>
                           <button onClick={() => handleRemoveItem(item.id)} className='removeButton'>
                             Remove
@@ -345,7 +353,6 @@ const AddReturnOrder: React.FC = () => {
             {loading && <Loader />}
           </Grid>
         </Grid>
-        <Toaster />
       </CardContent>
     </Card>
   )

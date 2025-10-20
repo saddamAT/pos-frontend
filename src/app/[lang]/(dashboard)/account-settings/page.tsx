@@ -1,30 +1,17 @@
-// React Imports
-import type { ReactElement } from 'react'
-
-// Next Imports
-import dynamic from 'next/dynamic'
+// MUI Imports
+import Grid from '@mui/material/Grid'
 
 // Component Imports
-import AccountSettings from '@views/pages/account-settings'
-const AccountTab = dynamic(() => import('@views/pages/account-settings/account'))
-const SecurityTab = dynamic(() => import('@views/pages/account-settings/security'))
-const BillingPlansTab = dynamic(() => import('@views/pages/account-settings/billing-plans'))
-const NotificationsTab = dynamic(() => import('@views/pages/account-settings/notifications'))
-const ConnectionsTab = dynamic(() => import('@views/pages/account-settings/connections'))
-const PostalCodes = dynamic(() => import('@views/pages/account-settings/postal-codes'))
+import AccountDetails from '@/components/account-settings/AccountDetails'
 
-// Vars
-const tabContentList = (): { [key: string]: ReactElement } => ({
-  account: <AccountTab />,
-  security: <SecurityTab />,
-  'billing-plans': <BillingPlansTab />,
-  notifications: <NotificationsTab />,
-  connections: <ConnectionsTab />,
-  postalcodes: <PostalCodes />
-})
-
-const AccountSettingsPage = () => {
-  return <AccountSettings tabContentList={tabContentList()} />
+const Account = () => {
+  return (
+    <Grid container spacing={6}>
+      <Grid item xs={12}>
+        <AccountDetails />
+      </Grid>
+    </Grid>
+  )
 }
 
-export default AccountSettingsPage
+export default Account

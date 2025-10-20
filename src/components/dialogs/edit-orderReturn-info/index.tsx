@@ -17,18 +17,18 @@ import Typography from '@mui/material/Typography'
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import toast, { Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
-import { useAuthStore } from '@/store/authStore'
-import { getAllOrders } from '@/api/order'
+import toast from 'react-hot-toast'
+
 import { getAllUsers } from '@/api/user'
 import { getAllBusiness } from '@/api/business'
 import { UsersType } from '@/types/apps/userTypes'
-import { BusinessType } from '@/types/apps/businessTypes'
+
 import { OrdersType } from '@/types/apps/orderTypes'
 import { OrderReturnDataType } from '@/api/interface/orderReturnInterface'
 import { MenuItem } from '@mui/material'
 import { updateOrderReturns } from '@/api/orderReturns'
+import { BusinessType } from '@/api/interface/businessInterface'
+import { getAllOrders } from '@/api/order'
 
 type EditOrderReturnInfoProps = {
   open: boolean
@@ -108,9 +108,7 @@ const EditOrderReturnInfo = ({ open, setOpen, data, onTypeAdded }: EditOrderRetu
     const id: number = data?.id ?? 0
     updateOrderReturns(id, data1)
       .then(res => {
-        toast.success('Order Returns Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.success('Order Returns Updated Successfully')
         if (onTypeAdded) {
           onTypeAdded()
         }
@@ -260,7 +258,6 @@ const EditOrderReturnInfo = ({ open, setOpen, data, onTypeAdded }: EditOrderRetu
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
     </Dialog>
   )
 }

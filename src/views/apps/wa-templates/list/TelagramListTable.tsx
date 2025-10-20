@@ -1,0 +1,451 @@
+'use client'
+
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Card from '@mui/material/Card'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Checkbox from '@mui/material/Checkbox'
+import TablePagination from '@mui/material/TablePagination'
+import type { TextFieldProps } from '@mui/material/TextField'
+import MenuItem from '@mui/material/MenuItem'
+// Third-party Imports
+import classnames from 'classnames'
+import { rankItem } from '@tanstack/match-sorter-utils'
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFacetedMinMaxValues,
+  getPaginationRowModel,
+  getSortedRowModel
+} from '@tanstack/react-table'
+import type { ColumnDef, FilterFn } from '@tanstack/react-table'
+import type { RankingInfo } from '@tanstack/match-sorter-utils'
+
+import toast from 'react-hot-toast'
+import type { ThemeColor } from '@core/types'
+import TablePaginationComponent from '@components/TablePaginationComponent'
+import CustomTextField from '@core/components/mui/TextField'
+import tableStyles from '@core/styles/table.module.css'
+import { TelegramDataType } from '@/api/interface/telegramInterface'
+import { deletTeleGram, GetTeleGram } from '@/api/telegram'
+import { useAuthStore } from '@/store/authStore'
+import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
+import EditTelegramInfo from '@/components/dialogs/edit-telegram-info'
+
+declare module '@tanstack/table-core' {
+  interface FilterFns {
+    fuzzy: FilterFn<unknown>
+  }
+  interface FilterMeta {
+    itemRank: RankingInfo
+  }
+}
+
+import type { ButtonProps } from '@mui/material/Button'
+import { Locale } from '@/configs/i18n'
+import ConfirmationDialog from '@/components/dialogs/confirmation-dialog/DeleteConfirmationModal'
+import Loader from '@/components/loader/Loader'
+import { FeedToChatGptFileType } from '@/api/interface/interfaceFeedToGPT'
+import { BusinessType } from '@/api/interface/businessInterface'
+
+type TelegramTypeWithAction = TelegramDataType & {
+  action?: string
+}
+
+const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
+  const itemRank = rankItem(row.getValue(columnId), value)
+
+  addMeta({
+    itemRank
+  })
+
+  return itemRank.passed
+}
+
+const DebouncedInput = ({
+  value: initialValue,
+  onChange,
+  debounce = 500,
+  ...props
+}: {
+  value: string | number
+  onChange: (value: string | number) => void
+  debounce?: number
+} & Omit<TextFieldProps, 'onChange'>) => {
+  const [value, setValue] = useState(initialValue)
+
+  useEffect(() => {
+    setValue(initialValue)
+  }, [initialValue])
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onChange(value)
+    }, debounce)
+
+    return () => clearTimeout(timeout)
+  }, [value, debounce, onChange])
+
+  return <CustomTextField {...props} value={value} onChange={e => setValue(e.target.value)} />
+}
+
+const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
+  children,
+  color,
+  variant
+})
+
+const columnHelper = createColumnHelper<TelegramTypeWithAction>()
+
+const TelegramListTable = ({
+  tableData,
+  // businesses,
+  feedToChatGpt
+}: {
+  tableData?: TelegramDataType[]
+  // businesses: BusinessType[]
+  feedToChatGpt: FeedToChatGptFileType[]
+}) => {
+  const [rowSelection, setRowSelection] = useState({})
+  const [data, setData] = useState<TelegramDataType[]>(tableData || [])
+  const [deleteTelegramOpen, setDeleteTelegramOpen] = useState(false)
+  const { telegramAction, telegramData, businessData } = useAuthStore()
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [loading, setLoading] = useState<boolean>(false)
+  const [editTelegramFlag, setEditTelegramFlag] = useState(false)
+
+  const fetchTeleGram = async () => {
+    try {
+      setLoading(true)
+      const response = await GetTeleGram()
+      setData(response?.data?.results)
+      telegramAction(response?.data?.results)
+      setLoading(false)
+    } catch (error: any) {
+      // Handle error
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTeleGram()
+  }, [deleteTelegramOpen, editTelegramFlag])
+
+  const handleTypeAdded = () => {
+    fetchTeleGram()
+    setEditTelegramFlag(true)
+  }
+
+  const handleDeleteTelegram = (id: number) => {
+    setDeleteTelegramOpen(false)
+    deletTeleGram(id.toString())
+      .then(res => {
+        toast.success('Telegram deleted successfully')
+        setDeleteTelegramOpen(true)
+      })
+      .catch(error => {
+        console.log(error, 'error in deleting TeleGram')
+        if (error?.data && error?.data?.detail) {
+          toast.error(error?.data?.detail)
+        } else {
+          toast.error('error in deleting TeleGram')
+        }
+      })
+  }
+
+  const truncateText = (text: any, maxLength: any) => {
+    if (!text) return ''
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
+  }
+
+  const columns = useMemo<ColumnDef<TelegramDataType, any>[]>(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            {...{
+              checked: table.getIsAllRowsSelected(),
+              indeterminate: table.getIsSomeRowsSelected(),
+              onChange: table.getToggleAllRowsSelectedHandler()
+            }}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            {...{
+              checked: row.getIsSelected(),
+              disabled: !row.getCanSelect(),
+              indeterminate: row.getIsSomeSelected(),
+              onChange: row.getToggleSelectedHandler()
+            }}
+          />
+        )
+      },
+      columnHelper.accessor('id', {
+        header: ' #',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row.original.id}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('business', {
+        header: ' Business',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row?.original?.business}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('active', {
+        header: 'Status',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {row?.original?.active ? 'Active' : 'In Active'}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+
+      columnHelper.accessor('name', {
+        header: 'name',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {truncateText(row?.original?.name, 15)}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+
+      columnHelper.accessor('username', {
+        header: 'User Name',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {truncateText(row?.original?.username, 15)}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+      columnHelper.accessor('feed_to_gpt', {
+        header: 'Feed to Gpt',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-4'>
+            <div className='flex flex-col'>
+              <Typography color='text.primary' className='font-medium'>
+                {truncateText(row?.original?.feed_to_gpt, 15)}
+              </Typography>
+            </div>
+          </div>
+        )
+      }),
+
+      columnHelper.accessor('action', {
+        header: 'Action',
+        cell: ({ row }) => (
+          <div className='flex gap-2'>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-eye text-textSecondary' />
+                }}
+                dialog={EditTelegramInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'view',
+                  data: telegramData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businessData,
+                  feedToChatGpt
+                }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={buttonProps('Edit', 'primary', 'contained')}
+                dialog={EditTelegramInfo}
+                onTypeAdded={handleTypeAdded}
+                dialogProps={{
+                  mode: 'edit',
+                  data: telegramData.find((item: any) => item.id === row?.original?.id),
+                  businesses: businessData,
+                  feedToChatGpt
+                }}
+              />
+            </div>
+            <div>
+              <OpenDialogOnElementClick
+                element={Button}
+                elementProps={{
+                  className: 'table-delete-icon',
+                  color: 'primary',
+                  children: <i className='tabler-trash text-[22px]' />
+                }}
+                dialog={ConfirmationDialog}
+                onConfirm={() => row.original.id && handleDeleteTelegram(row.original.id)}
+                dialogProps={{ type: 'delete' }}
+              />
+            </div>
+          </div>
+        ),
+        enableSorting: false
+      })
+    ],
+    [data]
+  )
+
+  const table = useReactTable({
+    data: data as TelegramDataType[],
+    columns,
+    filterFns: {
+      fuzzy: fuzzyFilter
+    },
+    state: {
+      rowSelection,
+      globalFilter
+    },
+    initialState: {
+      pagination: {
+        pageSize: 10
+      }
+    },
+    enableRowSelection: true,
+    globalFilterFn: fuzzyFilter,
+    onRowSelectionChange: setRowSelection,
+    getCoreRowModel: getCoreRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
+    getFacetedMinMaxValues: getFacetedMinMaxValues()
+  })
+
+  return (
+    <>
+      <Card>
+        {/* {loading && <Loader />} */}
+        <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
+          <CustomTextField
+            select
+            value={table.getState().pagination.pageSize}
+            onChange={e => table.setPageSize(Number(e.target.value))}
+            className='is-[70px]'
+          >
+            <MenuItem value='10'>10</MenuItem>
+            <MenuItem value='25'>25</MenuItem>
+            <MenuItem value='50'>50</MenuItem>
+          </CustomTextField>
+          <div className='flex flex-col sm:flex-row is-full sm:is-auto items-start sm:items-center gap-4'>
+            <DebouncedInput
+              value={globalFilter ?? ''}
+              onChange={value => setGlobalFilter(String(value))}
+              placeholder='Search Telegram'
+              className='is-full sm:is-auto'
+            />
+
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Add Telegram', variant: 'contained' }}
+              dialog={EditTelegramInfo}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{
+                mode: 'add',
+                businesses: businessData,
+                feedToChatGpt
+              }}
+            />
+          </div>
+        </div>
+        <div className='overflow-x-auto'>
+          <table className={tableStyles.table}>
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id}>
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className={classnames({
+                            'flex items-center': header.column.getIsSorted(),
+                            'cursor-pointer select-none': header.column.getCanSort()
+                          })}
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {{
+                            asc: <i className='tabler-chevron-up text-xl' />,
+                            desc: <i className='tabler-chevron-down text-xl' />
+                          }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                        </div>
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getFilteredRowModel().rows?.length === 0 ? (
+                <tr>
+                  <td colSpan={table.getVisibleFlatColumns()?.length} className='text-center'>
+                    No data available
+                  </td>
+                </tr>
+              ) : (
+                table
+                  .getRowModel()
+                  .rows.slice(0, table.getState().pagination.pageSize)
+                  .map(row => (
+                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      ))}
+                    </tr>
+                  ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <TablePagination
+          component={() => <TablePaginationComponent table={table} />}
+          count={table.getFilteredRowModel()?.rows?.length ?? 0}
+          rowsPerPage={table.getState().pagination.pageSize}
+          page={table.getState().pagination.pageIndex}
+          onPageChange={(_, page) => {
+            table.setPageIndex(page)
+          }}
+        />
+      </Card>
+    </>
+  )
+}
+
+export default TelegramListTable

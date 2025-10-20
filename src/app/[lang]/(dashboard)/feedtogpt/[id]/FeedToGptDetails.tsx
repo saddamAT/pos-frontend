@@ -1,106 +1,96 @@
 // MUI Imports
 'use client'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Chip from '@mui/material/Chip'
-import Divider from '@mui/material/Divider'
+import { useState } from 'react'
+import Grid from '@mui/material/Grid'
+import { useParams, useRouter } from 'next/navigation'
+import CustomTextField from '@core/components/mui/TextField'
 
-import type { ButtonProps } from '@mui/material/Button'
-
-// Type Imports
-import type { ThemeColor } from '@core/types'
-
-import { useEffect, useState } from 'react'
-import { getFeedToGptById } from '@/api/feedToChatGPT'
+import { Dialog, DialogContent, DialogTitle } from '@mui/material'
+import { getLocalizedUrl } from '@/utils/i18n'
+import { Locale } from '@/configs/i18n'
 import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
+import DialogCloseButton from '@/components/dialogs/DialogCloseButton'
 
 type PreviewWhatsAppProps = {
-  id: string
+  feedToGptItemData: FeedToChatGptType | null
 }
 
 // MenuDataType
-const FeedToGptDetails = ({ id }: PreviewWhatsAppProps) => {
-  const [feedToGptItemData, setFeedToGptItemData] = useState<FeedToChatGptType | null>(null)
-  // Vars
-  const buttonProps = (children: string, color: ThemeColor, variant: ButtonProps['variant']): ButtonProps => ({
-    children,
-    color,
-    variant
-  })
+const FeedToGptDetails = ({ feedToGptItemData }: PreviewWhatsAppProps) => {
+  const { lang: locale } = useParams() as { lang: Locale }
+  const [open, setOpen] = useState(true)
+  const router = useRouter()
 
-  useEffect(() => {
-    const fetchFeedToGpt = async () => {
-      try {
-        const response = await getFeedToGptById(Number(id))
-        console.log(response?.data, 'response Of fetchFeedToGpt------')
-        setFeedToGptItemData(response?.data)
-        // setOrderAddress(response?.data?.address)
-        // setOrderItemsData(response?.data?.order_items)
-      } catch (error: any) {
-        console.log(error, 'error')
-
-        // Handle error
-      }
-    }
-    fetchFeedToGpt()
-  }, [id])
+  const handleClose = () => {
+    setOpen(false)
+    router.push(getLocalizedUrl('/platforms', locale as Locale))
+  }
 
   return (
     <>
-      <Card>
-        <CardContent className='flex flex-col pbs-12 gap-6'>
-          <div>
-            <Typography variant='h5'>Feed to gpt Details</Typography>
-            <Divider className='mlb-4' />
-            <div className='flex flex-col gap-2'>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Business
-                </Typography>
-                <Typography>{feedToGptItemData && feedToGptItemData.business}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Name
-                </Typography>
-                <Typography>{feedToGptItemData && feedToGptItemData.name}</Typography>
-              </div>
+      <Dialog open={open} scroll='body' onClose={handleClose} sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}>
+        <DialogCloseButton onClick={handleClose} disableRipple>
+          <i className='tabler-x' />
+        </DialogCloseButton>
+        <DialogTitle variant='h4' className='flex gap-2 flex-col text-center sm:pbs-11 sm:pbe-4 sm:pli-11'>
+          FeedToGpt Details
+        </DialogTitle>
 
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Website Url
-                </Typography>
-                <Typography>{feedToGptItemData && feedToGptItemData.website_url}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Api Url
-                </Typography>
-                <Typography color='text.primary'>{feedToGptItemData && feedToGptItemData.api_url}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Description
-                </Typography>
-                <Typography color='text.primary'>{feedToGptItemData && feedToGptItemData.desc}</Typography>
-              </div>
-              <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  User Name
-                </Typography>
-                <Typography color='text.primary'>{feedToGptItemData && feedToGptItemData.user_name}</Typography>
-              </div>
-              {/* <div className='flex items-center flex-wrap gap-x-1.5'>
-                <Typography className='font-medium' color='text.primary'>
-                  Catalog Id
-                </Typography>
-                <Typography color='text.primary'>{feedToGptItemData && feedToGptItemData.catalog_id}</Typography>
-              </div> */}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <DialogContent className='overflow-visible pbs-0 sm:pli-16'>
+          <Grid container spacing={5}>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Business'
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.business}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Name'
+                InputProps={{ readOnly: true }}
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.name}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <CustomTextField
+                label='Description'
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.desc}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Website URL'
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.website_url}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='Api URL'
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.api_url}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextField
+                label='User Name'
+                fullWidth
+                defaultValue={feedToGptItemData && feedToGptItemData?.user_name}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

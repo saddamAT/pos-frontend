@@ -2,11 +2,6 @@
 import Grid from '@mui/material/Grid'
 
 import FaceBookDetails from './FaceBookDetails'
-// import MenuDetails from './MenuDetails'
-
-// Component Imports
-// import UserDetails from './UserDetails'
-// import UserPlan from './UserPlan'
 
 type PageProps = {
   params: {

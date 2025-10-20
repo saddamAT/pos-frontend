@@ -17,33 +17,29 @@ import Typography from '@mui/material/Typography'
 // Component Imports
 import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
-import toast, { Toaster } from 'react-hot-toast'
-import { useParams, useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { OrderDataType } from '@/api/interface/orderInterface'
 import { updateOrder } from '@/api/order'
-import { getLocalizedUrl } from '@/utils/i18n'
-import { Locale } from '@/configs/i18n'
+import UpdateConfirmationDialog from '@/components/UpdateConfirmationDialog'
 
 type EditOrderInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
   data?: OrderDataType
   onTypeAdded?: any
+  mode?: string
 }
 
-const EditOrderInfo = ({ open, setOpen, data, onTypeAdded }: EditOrderInfoProps) => {
+const EditOrderInfo = ({ open, setOpen, data, onTypeAdded, mode }: EditOrderInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const router = useRouter()
-  const { lang: locale } = useParams()
+  const [openConfirmation, setOpenConfirmation] = useState(false)
+  const [payloadData, setPayloadData] = useState<OrderDataType | null>(null)
+
   const {
     register,
     handleSubmit,
     formState: { errors }
   } = useForm<OrderDataType>()
-  // console.log(data, 'order Data----------')
-
-  // States
-  const [userData, setUserData] = useState<EditOrderInfoProps['data'] | null>(data || null)
 
   const handleClose = () => {
     setOpen(false)
@@ -52,30 +48,29 @@ const EditOrderInfo = ({ open, setOpen, data, onTypeAdded }: EditOrderInfoProps)
   const onSubmit = (data1: OrderDataType, e: any) => {
     e.preventDefault()
 
-    const id: number = data?.id ?? 0
-    // console.log(id, 'id')
+    if (mode === 'edit') {
+      setPayloadData({ ...data1, id: data?.id ?? 0 })
+      setOpenConfirmation(true)
+    }
+  }
 
-    updateOrder(id, data1)
-      .then(res => {
-        // console.log(res, 'res of Update Order Api-----------')
-        toast.success('Order Updated Successfully', {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-        if (onTypeAdded) {
-          onTypeAdded()
-        }
+  const handleConfirm = async () => {
+    if (!payloadData) return
 
-        setOpen(false)
+    try {
+      setLoading(true)
+      await updateOrder(payloadData.id, payloadData)
+      toast.success('Order Updated Successfully')
+      onTypeAdded?.()
+      setOpen(false)
+    } catch (error: any) {
+      toast.error(error?.data?.detail, {
+        duration: 5000
       })
-      .catch(error => {
-        console.log(error, 'error Order Update api')
-        toast.error(error?.data?.detail, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    } finally {
+      setLoading(false)
+      setOpen(false)
+    }
   }
 
   return (
@@ -127,7 +122,15 @@ const EditOrderInfo = ({ open, setOpen, data, onTypeAdded }: EditOrderInfoProps)
           </Button>
         </DialogActions>
       </form>
-      <Toaster />
+      {mode === 'edit' && (
+        <UpdateConfirmationDialog
+          openConfirmation={openConfirmation}
+          onClose={() => setOpenConfirmation(false)}
+          onConfirm={handleConfirm}
+          title='Edit Order'
+          description='Are you sure you want to edit this Order?'
+        />
+      )}
     </Dialog>
   )
 }

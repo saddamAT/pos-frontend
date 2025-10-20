@@ -1,14 +1,24 @@
-import type { Metadata } from 'next'
+// React Imports
+import type { ReactElement } from 'react'
 
-import UserProfilePage from '@/views/UserProfile'
+// Next Imports
+import dynamic from 'next/dynamic'
 
-export const metadata: Metadata = {
-  title: 'User Profile',
-  description: 'User Profile'
+// Type Imports
+import type { Data } from '@/types/pages/profileTypes'
+
+// Component Imports
+import UserProfile from '@components/user-profile'
+import { userDb } from '@/fake-db/billing-plans'
+const ProfileTab = dynamic(() => import('@components/user-profile/profile'))
+
+// Vars
+const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
+  profile: <ProfileTab data={data?.users.profile} />
+})
+
+const ProfilePage = async () => {
+  return <UserProfile data={userDb} tabContentList={tabContentList(userDb)} />
 }
 
-const UserProfile = () => {
-  return <UserProfilePage />
-}
-
-export default UserProfile
+export default ProfilePage

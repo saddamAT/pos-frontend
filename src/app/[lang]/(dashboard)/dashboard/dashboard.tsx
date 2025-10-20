@@ -149,21 +149,10 @@ const ResturantUserDataTable = ({ token }: { token?: string }) => {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  // https://jsonplaceholder.typicode.com/posts
-  // const auth_token = localStorage.getItem('auth_token')
-  // console.log('irere-----------', token, auth_token)
-  // if (!token) {
-  //   router.replace('/login')
-  // } else {
-  //   router.replace('/dashboard')
-  // }
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get<DataType[]>('https://jsonplaceholder.typicode.com/users')
-
-        console.log(response.data, 'api fetch data')
 
         setData(response.data)
       } catch (error) {

@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 import { useRouter, useParams } from 'next/navigation'
 
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -114,9 +114,7 @@ const ResetPassword = ({ mode }: { mode: SystemMode }) => {
       console.log(res, 'res')
 
       if (res?.status === 200) {
-        toast.success(res?.data?.message, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.success(res?.data?.message)
         // router.push('/login')
         router.push(getLocalizedUrl('/login', locale as Locale))
       }
@@ -212,7 +210,6 @@ const ResetPassword = ({ mode }: { mode: SystemMode }) => {
               </Link>
             </Typography>
           </form>
-          <Toaster />
         </div>
       </div>
     </div>

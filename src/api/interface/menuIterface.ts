@@ -14,7 +14,7 @@ export interface MenuDataType {
   brand: string
   rating: number
   price: number
-  purchase_price: number
+  sale_price: number
   profit: number
   condition: string
   description: string
@@ -30,6 +30,7 @@ export interface MenuDataType {
   topping?: string
   // quantity: string
   quantity: number
+  purchase_price: number
 }
 
 interface OrderItem {

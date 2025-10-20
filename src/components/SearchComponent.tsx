@@ -10,13 +10,9 @@ const SearchComponent: React.FC = () => {
   const [selectedItems, setSelectedItems] = useState<SearchedMenuItem[]>([])
   const [showDropdown, setShowDropdown] = useState<boolean>(false)
   const [menuData, setMenuData] = useState<SearchedMenuItem[]>([])
-  // MenuDataType
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  // Use the debounce hook to delay the search execution
   const debouncedSearchTerm = useDebounce(searchTerm, 300) // 300ms delay
 
-  // Handle clicks outside the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -51,14 +47,11 @@ const SearchComponent: React.FC = () => {
       }
       try {
         const params = debouncedSearchTerm.toLowerCase()
-        // console.log(params, 'params')
 
         const response = await searchMenu(params)
         setMenuData(response?.data?.results)
-        console.log(response?.data?.results, 'response')
       } catch (err: any) {
         console.error('Error fetching businesses:', err)
-        // toast.error(err.message || 'Failed to fetch businesses')
       }
       const results = menuData.filter(item => item.sku.toLowerCase().includes(debouncedSearchTerm.toLowerCase()))
       setSearchResults(results)

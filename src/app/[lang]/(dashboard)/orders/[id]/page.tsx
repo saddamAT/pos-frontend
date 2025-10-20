@@ -1,5 +1,4 @@
-import PrintOrder from '@/components/PrintOrder'
-import SharjahPrintOrder from '@/components/SharjahPrintOrder'
+import PrintOrder from '@/components/order/PrintOrder'
 
 type PageProps = {
   params: {
@@ -11,8 +10,7 @@ type PageProps = {
 export default function Page({ params }: PageProps) {
   return (
     <>
-      {/* <PrintOrder id={params.id} /> */}
-      <SharjahPrintOrder id={params.id} />
+      <PrintOrder id={params.id} />
     </>
   )
 }

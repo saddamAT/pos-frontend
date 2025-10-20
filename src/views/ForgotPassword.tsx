@@ -11,7 +11,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
-import toast, { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -84,9 +84,7 @@ const ForgotPassword = ({ mode }: { mode: SystemMode }) => {
         // console.log(res, '-----------')
 
         if (res?.status === 200) {
-          toast.success(res?.data?.message, {
-            duration: 5000 // Duration in milliseconds (5 seconds)
-          })
+          toast.success(res?.data?.message)
 
           // const token = res.data.token
           // if (isRememberMeChecked) {
@@ -98,9 +96,7 @@ const ForgotPassword = ({ mode }: { mode: SystemMode }) => {
       })
       .catch(error => {
         // console.log(error, 'error')
-        toast.error(error?.data?.message, {
-          duration: 5000 // Duration in milliseconds (5 seconds)
-        })
+        toast.error(error?.data?.message)
 
         // if (error.non_field_errors) {
         //   toast.error(error?.non_field_errors[0])
@@ -185,7 +181,6 @@ const ForgotPassword = ({ mode }: { mode: SystemMode }) => {
               </Link>
             </Typography>
           </form>
-          <Toaster />
         </div>
       </div>
     </div>

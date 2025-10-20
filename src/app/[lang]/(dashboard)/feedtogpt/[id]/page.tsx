@@ -1,6 +1,8 @@
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import FeedToGptDetails from './FeedToGptDetails'
+import { getFeedToGptById } from '@/api/feedToChatGPT'
+import { FeedToChatGptType } from '@/api/interface/interfaceFeedToGPT'
 
 type PageProps = {
   params: {
@@ -9,12 +11,13 @@ type PageProps = {
   searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-const FeedToGptPreview = ({ params }: PageProps) => {
+const FeedToGptPreview = async ({ params }: PageProps) => {
+  const response = await getFeedToGptById(Number(params?.id))
+  const feedToGptItemData: FeedToChatGptType | null = response?.data
   return (
     <Grid container spacing={6}>
-      {/* hello how are you */}
       <Grid item xs={6}>
-        <FeedToGptDetails id={params.id} />
+        <FeedToGptDetails feedToGptItemData={feedToGptItemData} />
       </Grid>
     </Grid>
   )

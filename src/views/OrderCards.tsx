@@ -47,7 +47,7 @@ const data: DataType[] = [
     desc: '6k'
   },
   {
-    title: 'Affiliate',
+    title: 'Return Orders',
     value: '$8,345',
     icon: 'tabler-wallet',
     desc: '150',
