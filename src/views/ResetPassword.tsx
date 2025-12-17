@@ -111,17 +111,15 @@ const ResetPassword = ({ mode }: { mode: SystemMode }) => {
 
     try {
       const res = await resetPassword({ new_password: data.new_password }, { userId, token, expiration_time })
-      console.log(res, 'res')
 
       if (res?.status === 200) {
         toast.success(res?.data?.message)
-        // router.push('/login')
         router.push(getLocalizedUrl('/login', locale as Locale))
       }
     } catch (error) {
       console.log(error, 'error')
       toast.error('An error occurred while resetting the password.', {
-        duration: 5000 // Duration in milliseconds (5 seconds)
+        duration: 5000
       })
     } finally {
       setLoading(false)

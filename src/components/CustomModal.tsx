@@ -35,8 +35,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
   const handleSubmit = () => {
     const numericCode = parseInt(verificationCode, 10) // Convert string to number if necessary
 
-    onSubmit(numericCode, email) // Pass both email and code to the onSubmit function
-    // onClose() // Optionally close the modal after submit
+    onSubmit(numericCode, email)
   }
 
   return (
@@ -72,15 +71,7 @@ const CustomModal: React.FC<CustomModalProps> = ({
           required
         />
       </DialogContent>
-      {/* <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <DialogActions className='dialog-actions-dense'>
-          <Button onClick={onClose}>Close</Button>
-          <Button disabled={loadingVerify} onClick={handleSubmit}>
-            {submitButtonText}
-          </Button>
-        </DialogActions>
-        <div>{loadingVerify && <Loader />}</div>
-      </div> */}
+
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <div style={{ paddingLeft: '16px' }}>{loadingVerify && <Loader />}</div>
         <DialogActions className='dialog-actions-dense' style={{ marginLeft: 'auto' }}>

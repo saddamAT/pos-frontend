@@ -14,15 +14,10 @@ import type { Data } from '@/types/pages/profileTypes'
 
 // Component Imports
 import UserProfileHeader from './UserProfileHeader'
-import { useSession } from 'next-auth/react'
 
 const UserProfile = ({ tabContentList, data }: { tabContentList: { [key: string]: ReactElement }; data?: Data }) => {
   // States
   const [activeTab, setActiveTab] = useState('profile')
-
-  const session = useSession()
-
-  // console.log(session, 'session')
 
   return (
     <Grid container spacing={6}>

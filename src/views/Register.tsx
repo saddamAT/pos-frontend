@@ -132,20 +132,14 @@ const Register = ({ mode }: { mode: SystemMode }) => {
       })
       .catch(error => {
         console.log(error, 'error')
-        // if (error?.response?.data) {
-        //   toast.error(error?.response?.data?.email[0])
-        // } else {
-        //   toast.error('An error occurred while registering')
-        // }
-        // console.log(error?.response?.data, 'error')
 
         if (error?.email) {
           toast.error(error?.email[0], {
-            duration: 5000 // Duration in milliseconds (5 seconds)
+            duration: 5000
           })
         } else {
           toast.error('An error occurred while registering', {
-            duration: 5000 // Duration in milliseconds (5 seconds)
+            duration: 5000
           })
         }
       })

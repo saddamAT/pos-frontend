@@ -99,44 +99,6 @@ const Login = ({ mode }: { mode: SystemMode }) => {
     formState: { errors }
   } = useForm<LoginUser>()
 
-  // pull businesses from session safely
-  // const businesses = (session?.user?.userBusinesses ?? []) as UserBusiness[]
-
-  // Default selection: first business w/ outlet -> first outlet
-  // const firstBizWithOutlet = useMemo(
-  //   () => businesses.find(b => (b.user_business?.length ?? 0) > 0) || null,
-  //   [businesses]
-  // )
-  // const initialSelected = {
-  //   businessId: firstBizWithOutlet?.id ?? null,
-  //   outletId: firstBizWithOutlet?.user_business?.[0]?.id ?? null
-  // }
-
-  // const onSubmit = async (data: LoginUser) => {
-  //   try {
-  //     setLoading(true)
-  //     const res = await signIn('credentials', {
-  //       email: data.email,
-  //       password: data.password,
-  //       redirect: false
-  //     })
-  //     setLoading(false)
-
-  //     if (res && res.ok && res.error === null) {
-  //       toast.success('Logged in successfully.')
-  //       router.replace(getLocalizedUrl('/home?postLogin=1', locale))
-  //       // setShowPostLogin(true) // open modal, not redirecting immediately
-  //     } else {
-  //       console.log(res?.error, 'error---->')
-
-  //       toast.error(res?.error || 'Login failed')
-  //     }
-  //   } catch {
-  //     setLoading(false)
-  //     toast.error('Something went wrong while logging in')
-  //   }
-  // }
-
   const onSubmit = async (data: LoginUser) => {
     try {
       setLoading(true)
@@ -146,6 +108,8 @@ const Login = ({ mode }: { mode: SystemMode }) => {
         redirect: false
       })
       setLoading(false)
+
+      console.log(res, 'res---------->')
 
       if (res && res.ok && res.error === null) {
         toast.success('Logged in successfully.')
@@ -178,13 +142,6 @@ const Login = ({ mode }: { mode: SystemMode }) => {
   }
 
   const handleClickShowPassword = () => setIsPasswordShown(s => !s)
-
-  // When user confirms selection in the modal
-  // const handleConfirmSelection = (sel: { businessId: number | null; outletId: number | null }) => {
-  //   const qp = sel.businessId && sel.outletId ? `?business=${sel.businessId}&outlet=${sel.outletId}` : ''
-  //   // Go to dashboard with selection
-  //   router.replace(getLocalizedUrl(`/home${qp}`, locale))
-  // }
 
   return (
     <div className='flex bs-full justify-center'>

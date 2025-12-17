@@ -60,7 +60,6 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const { lang: locale } = useParams() as { lang: Locale }
 
   const { data } = useSession()
-  // console.log(data, 'data')
 
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 

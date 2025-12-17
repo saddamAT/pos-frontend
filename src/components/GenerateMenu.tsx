@@ -68,12 +68,6 @@ export const GenerateVerticalMenu = ({ menuData }: { menuData: VerticalMenuDataT
         prefix && (prefix as ChipProps).label ? <Chip size='small' {...(prefix as ChipProps)} /> : (prefix as ReactNode)
       const menuItemSuffix: ReactNode =
         suffix && (suffix as ChipProps).label ? <Chip size='small' {...(suffix as ChipProps)} /> : (suffix as ReactNode)
-
-      // return (
-      //   <VerticalMenuItem key={index} prefix={menuItemPrefix} suffix={menuItemSuffix} {...rest} icon={icon} href={href}>
-      //     {menuItem.label}
-      //   </VerticalMenuItem>
-      // )
     })
   }
 
@@ -117,12 +111,6 @@ export const GenerateHorizontalMenu = ({ menuData }: { menuData: HorizontalMenuD
         prefix && (prefix as ChipProps).label ? <Chip size='small' {...(prefix as ChipProps)} /> : (prefix as ReactNode)
       const menuItemSuffix: ReactNode =
         suffix && (suffix as ChipProps).label ? <Chip size='small' {...(suffix as ChipProps)} /> : (suffix as ReactNode)
-
-      // return (
-      //   <HorizontalMenuItem key={index} prefix={menuItemPrefix} suffix={menuItemSuffix} {...rest} icon={icon} href={href}>
-      //     {menuItem.label}
-      //   </HorizontalMenuItem>
-      // )
     })
   }
 
