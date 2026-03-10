@@ -4,6 +4,8 @@ export type UserSubscription = {
   company: string
   invoiceLimit: number
   isActive: boolean
+  is_active: boolean
+  business: string
   notes: string
   plan: string
   price: string
@@ -14,10 +16,10 @@ export type UserSubscription = {
 export type CreationSubscription = {
   plan: string
   price: number
-  invoice_limit: number
+  trial_limit: number
   notes: string
   company?: string
-  business: string
+  business: number
   user: number
   is_active: boolean
 }

@@ -55,12 +55,6 @@ const AddEditOutlet = ({ open, setOpen, data, mode, onTypeAdded, userBusiness }:
   const userBusinessesExistence = session?.user?.userBusinesses
   const hasBusinesses = (userBusinessesExistence?.length ?? 0) > 0
   const { businessData } = useAuthStore()
-  console.log(data?.business?.id, 'data---->')
-
-  // if (!userSession?.data?.user?.id) {
-  //   throw new Error('User ID missing')
-  // }
-  // const userId = userSession.data.user.id // Now safe
 
   const {
     register,

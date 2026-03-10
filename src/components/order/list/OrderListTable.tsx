@@ -372,17 +372,17 @@ const OrderListTable = ({ tableData }: { tableData?: OrdersType[] }) => {
               placeholder='Search Order'
               className='is-full sm:is-auto'
             />
-            {/* {session?.data?.user?.user_type?.toLowerCase() === 'cashier' ||
-              (session?.data?.user?.user_type?.toLowerCase() === 'manager' && ( */}
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={e => handleAddOrderRedirect(e)}
-              className='is-full sm:is-auto'
-            >
-              Add Order
-            </Button>
-            {/* ))} */}
+            {session?.data?.user?.user_type?.toLowerCase() === 'cashier' ||
+              (session?.data?.user?.user_type?.toLowerCase() === 'manager' && (
+                <Button
+                  variant='contained'
+                  startIcon={<i className='tabler-plus' />}
+                  onClick={e => handleAddOrderRedirect(e)}
+                  className='is-full sm:is-auto'
+                >
+                  Add Order
+                </Button>
+              ))}
           </div>
         </div>
         <div className='overflow-x-auto'>

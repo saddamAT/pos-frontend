@@ -18,23 +18,21 @@ import DialogCloseButton from '../DialogCloseButton'
 import CustomTextField from '@core/components/mui/TextField'
 
 import toast from 'react-hot-toast'
-import { getAllBusiness } from '@/api/business'
 import { createFoodType } from '@/api/foodTypes'
 import { ToppingDataType } from '@/api/interface/toppingInterface'
 import { BusinessType } from '@/api/interface/businessInterface'
-import { useAuthStore } from '@/store/authStore'
 import { ListItemText } from '@mui/material'
 
 type TypeInfoProps = {
   open: boolean
   setOpen: (open: boolean) => void
+  businesses?: BusinessType[]
   data?: ToppingDataType
   onTypeAdded?: any
 }
 
-const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
+const AddType = ({ open, setOpen, businesses, data, onTypeAdded }: TypeInfoProps) => {
   const [loading, setLoading] = useState<boolean>(false)
-  const { businessData } = useAuthStore()
 
   const {
     register,
@@ -118,8 +116,8 @@ const AddType = ({ open, setOpen, data, onTypeAdded }: TypeInfoProps) => {
                   className: errors.business && 'requiredFieldError'
                 }}
               >
-                {businessData && businessData.length > 0 ? (
-                  businessData.map((business: BusinessType) => (
+                {businesses && businesses.length > 0 ? (
+                  businesses.map((business: BusinessType) => (
                     <MenuItem key={business.id} value={business.id}>
                       {business.business_id}
                     </MenuItem>

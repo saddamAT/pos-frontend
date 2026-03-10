@@ -1,9 +1,5 @@
-// import { getUserInvitations } from '#/src/app/actions/invitations'
-import { UserInvitation } from '@/api/interface/userInterface'
-import { getUserInvitations } from '@/api/invitations'
-import Invitations from '@/components/invitations/list/InvitationsTableList'
+import InvitationsClient from '@/components/invitations/InvitationsClient'
 import { authOptions } from '@/libs/auth'
-import { Typography } from '@mui/material'
 
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
@@ -14,7 +10,7 @@ interface PageProps {
   }
 }
 
-const PricePage = async ({ params }: PageProps) => {
+const InvitationPage = async ({ params }: PageProps) => {
   const session = await getServerSession(authOptions)
   const user = session?.user
   const { lang } = params
@@ -23,15 +19,7 @@ const PricePage = async ({ params }: PageProps) => {
     redirect(`/${lang}/home`)
   }
 
-  const invitationResponse = await getUserInvitations()
-
-  if (!invitationResponse?.success) {
-    return <Typography>loading invitations</Typography>
-  }
-
-  const invitations: UserInvitation[] = invitationResponse?.data?.results ?? []
-
-  return <Invitations invitationData={invitations} />
+  return <InvitationsClient />
 }
 
-export default PricePage
+export default InvitationPage

@@ -349,7 +349,7 @@ const AddProduct = ({ open, setOpen, onTypeAdded, businesses }: AddProductFormPr
                           element={Button}
                           elementProps={buttonProps('Add', 'primary', 'contained')}
                           dialog={AddType}
-                          dialogProps={{}}
+                          dialogProps={{ businesses: businesses }}
                           onTypeAdded={handleTypeAdded} // Pass the callback
                         />
                       </div>

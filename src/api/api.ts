@@ -1,40 +1,66 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, AxiosResponse } from 'axios'
 import { getBaseUrl } from './vars/vars'
 import { getSession } from 'next-auth/react'
 
 const API_URL = getBaseUrl()
 
-export const GET = async (endpoint: string) => {
+// export const GET = async (endpoint: string) => {
+//   const session = await getSession()
+
+//   if (!session || !session?.user || !session?.accessToken) {
+//     console.error('No valid session or auth token found')
+//     throw new Error('Authentication token not available')
+//   }
+
+//   try {
+//     const response = await axios.get(`${API_URL}${endpoint}`, {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Accept: 'application/json',
+//         Authorization: `Token ${session?.accessToken}`
+//       }
+//     })
+
+//     return response
+//   } catch (error) {
+//     const axiosError = error as AxiosError
+//     console.log(axiosError, 'axiosError')
+
+//     if (axiosError.response?.status === 401) {
+//       window.location.href = '/en/login'
+
+//       console.error('Invalid or expired token')
+//       throw new Error('Authentication failed - please login again')
+//     }
+
+//     console.error('GET request failed:', error)
+//     throw error
+//   }
+// }
+
+export const GET = async <T>(endpoint: string, businessId?: number | null): Promise<AxiosResponse<T>> => {
   const session = await getSession()
 
-  if (!session || !session?.user || !session?.accessToken) {
-    console.error('No valid session or auth token found')
+  if (!session?.accessToken) {
     throw new Error('Authentication token not available')
   }
 
   try {
-    const response = await axios.get(`${API_URL}${endpoint}`, {
+    return await axios.get<T>(`${API_URL}${endpoint}`, {
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
-        Authorization: `Token ${session?.accessToken}`
+        Authorization: `Token ${session.accessToken}`,
+        ...(businessId && { 'X-Business-ID': String(businessId) })
       }
     })
-
-    return response
   } catch (error) {
     const axiosError = error as AxiosError
-    console.log(axiosError, 'axiosError')
 
     if (axiosError.response?.status === 401) {
       window.location.href = '/en/login'
-
-      console.error('Invalid or expired token')
-      throw new Error('Authentication failed - please login again')
     }
 
-    console.error('GET request failed:', error)
-    throw error
+    throw axiosError
   }
 }
 

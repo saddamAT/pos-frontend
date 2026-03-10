@@ -104,7 +104,6 @@ export interface UserInvitation {
 export interface UserInvitationCreation {
   id?: string
   email: string
-  business: number
   user_type: number
 }
 
@@ -183,4 +182,17 @@ export interface UserInvi {
 export interface CheckUserExistsResponse {
   exists: boolean
   user?: UserInvi
+}
+
+export interface AcceptInvitationPayload {
+  id: string
+  email: string
+  token: string
+  accepted_at: string | null
+  expires_at: string
+  created_at: string
+  business: number
+  branch: number | null
+  invited_by: number
+  role: number | null
 }

@@ -51,5 +51,6 @@ export const ENDPOINTS = {
   userBusinessById: 'whatseat/business/user',
   currencies: 'currencies',
   subscriptions: 'subscriptions',
-  invitations: 'invitations'
+  invitations: 'invitations',
+  subscriptionHistory: 'subscription-history'
 }

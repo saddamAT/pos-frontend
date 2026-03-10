@@ -2,17 +2,21 @@
 
 import CustomInputVertical from '@/@core/components/custom-inputs/Vertical'
 import { CustomInputVerticalData } from '@/@core/components/custom-inputs/types'
-import { getUserSubscription, updateUserSubscription } from '@/api/subscription'
+import { createUserSubscription, getUserSubscription, updateUserSubscription } from '@/api/subscription'
 import { CreationSubscription, UserSubscription } from '@/types/apps/subscriptions'
+
 import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import type { TypographyProps } from '@mui/material/Typography'
 import { styled } from '@mui/material/styles'
+
 import { useSession } from 'next-auth/react'
 import React, { useEffect, useState } from 'react'
 import { useForm, FormProvider, Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
+
+/* -------------------- DESIGN (COPIED 1:1) -------------------- */
 
 const Content = styled(Typography, {
   name: 'MuiCustomInputVertical',
@@ -99,11 +103,11 @@ const planOptions: PlanOption[] = [
     value: 'enterprise',
     content: (
       <Content component='div' className='flex flex-col justify-center items-center gap-2'>
-        <Typography>Processing more than 5,000 </Typography>
+        <Typography>Processing more than 5,000</Typography>
         <Typography>invoices/month?</Typography>
         <div className='flex flex-col items-center my-4'>
           <Typography variant='h2'>$5,000+</Typography>
-          <Typography className='text-xs'>Contact Us for </Typography>
+          <Typography className='text-xs'>Contact Us for</Typography>
           <Typography className='text-xs'>Enterprise Pricing options.</Typography>
         </div>
       </Content>
@@ -111,68 +115,44 @@ const planOptions: PlanOption[] = [
   }
 ]
 
+/* -------------------- COMPONENT -------------------- */
+
 const PosPricing: React.FC = () => {
   const methods = useForm<CreationSubscription>({ defaultValues: { plan: '' } })
-  const [loading, setLoading] = useState(false)
-  const [subscriptionData, setSubscriptionData] = useState<UserSubscription[]>([])
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
-
-  const { data: session } = useSession()
-
-  let selectedBusinessId = ''
-
-  if (session?.user.userBusinesses && session.user.selectedBusiness?.id) {
-    const match = session.user.userBusinesses.find(ub =>
-      ub.user_business?.some(b => b.id === session?.user?.selectedBusiness?.id)
-    )
-    selectedBusinessId = match?.business_id || selectedBusinessId
-  }
-
   const {
     handleSubmit,
     control,
+    setValue,
     formState: { errors }
   } = methods
 
-  const onSubmit = async (data: CreationSubscription) => {
-    const selected = planOptions.find(opt => opt.value === data.plan)
+  const { data: session } = useSession()
+  const [loading, setLoading] = useState(false)
+  const [activeSubscription, setActiveSubscription] = useState<UserSubscription | null>(null)
 
-    const payload = {
-      plan: data.plan,
-      price: selected?.price ?? 0,
-      invoice_limit: 2800,
-      notes: 'Initial plan for new client',
-      is_active: true,
-      user: session?.user?.id ?? 0,
-      business: selectedBusinessId
-    }
-
-    // const response = await updateUserSubscription(payload, selectedPlanId)
-    const response = await updateUserSubscription(Number(selectedPlanId), payload)
-
-    if (response.success) {
-      toast.success('Subscription Updated successfully')
-    } else if (typeof response.error === 'object' && response.error !== null && 'detail' in response.error) {
-      toast.error((response.error as { detail: string }).detail)
-    } else if (typeof response.error === 'string') {
-      toast.error(response.error?.detail)
-    } else {
-      toast.error('Something went wrong')
-    }
-  }
+  const selectedBusinessId = session?.user?.selectedBusiness?.id ?? null
 
   const fetchUserSubscription = async () => {
+    if (!session?.user?.id || !selectedBusinessId) return
+
     try {
-      const response = await getUserSubscription()
+      setLoading(true)
 
-      if (response.success) {
-        const subscriptions: UserSubscription[] = (response?.data?.results ?? []).flat()
+      const response = await getUserSubscription(selectedBusinessId)
+      const subscriptions: UserSubscription[] = response.data.results ?? []
 
-        setSubscriptionData(subscriptions)
-        setSelectedPlanId(subscriptions[0]?.id ?? 0)
+      const active = subscriptions.find(
+        sub => sub.is_active === true && sub.user === session.user.id && sub.business === selectedBusinessId
+      )
+
+      if (active) {
+        setActiveSubscription(active)
+        setValue('plan', active.plan)
+      } else {
+        setActiveSubscription(null)
       }
-    } catch (err) {
-      console.log(err)
+    } catch (error) {
+      console.error(error)
     } finally {
       setLoading(false)
     }
@@ -180,7 +160,42 @@ const PosPricing: React.FC = () => {
 
   useEffect(() => {
     fetchUserSubscription()
-  }, [])
+  }, [selectedBusinessId])
+
+  const onSubmit = async (data: CreationSubscription) => {
+    if (!session?.user?.id || !selectedBusinessId) {
+      toast.error('Missing user or business')
+      return
+    }
+
+    const selectedPlan = planOptions.find(p => p.value === data.plan)
+    if (!selectedPlan) {
+      toast.error('Invalid subscription plan')
+      return
+    }
+
+    const payload: CreationSubscription = {
+      plan: data.plan,
+      price: selectedPlan.price,
+      trial_limit: 4,
+      notes: 'Initial plan',
+      is_active: true,
+      user: session.user.id,
+      business: selectedBusinessId
+    }
+
+    try {
+      if (activeSubscription) {
+        await updateUserSubscription(activeSubscription.id, selectedBusinessId, payload)
+        toast.success('Subscription updated successfully')
+      } else {
+        await createUserSubscription(payload)
+        toast.success('Subscription created successfully')
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail ?? 'Something went wrong')
+    }
+  }
 
   return (
     <FormProvider {...methods}>
@@ -201,7 +216,6 @@ const PosPricing: React.FC = () => {
                   key={option.value}
                   type='radio'
                   data={option}
-                  //   selected={userRole === 'admin' ? field.value || subscriptionData?.[0]?.plan : field.value}
                   selected={field.value}
                   name={field.name}
                   handleChange={valOrEv => {
@@ -223,8 +237,9 @@ const PosPricing: React.FC = () => {
         <Button type='submit' variant='contained' className='mt-6'>
           Confirm Plan
         </Button>
+
+        {loading && <Typography className='mt-4 text-center'>Loading…</Typography>}
       </form>
-      {loading && 'Loading'}
     </FormProvider>
   )
 }

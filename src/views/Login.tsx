@@ -109,8 +109,6 @@ const Login = ({ mode }: { mode: SystemMode }) => {
       })
       setLoading(false)
 
-      console.log(res, 'res---------->')
-
       if (res && res.ok && res.error === null) {
         toast.success('Logged in successfully.')
         router.replace(getLocalizedUrl('/home?postLogin=1', locale))

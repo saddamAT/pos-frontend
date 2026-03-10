@@ -29,6 +29,13 @@ const getInvitationsBaseUrl = (): string => {
   if (!apiUrl) throw new Error('Missing API_URL environment variable')
   return `${apiUrl}/subscriptions/invitations`
 }
+
+const getMemberInvitationsBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/subscriptions/membership-invitations`
+}
+
 const getUserCheckUrl = (): string => {
   const apiUrl = process.env.API_URL
   if (!apiUrl) throw new Error('Missing API_URL environment variable')
@@ -42,43 +49,40 @@ const getCompanyUserInvitationsBaseUrl = (): string => {
   return `${apiUrl}/user/company-user-invitations`
 }
 
-// GET all invitations
-export async function getUserInvitations(): Promise<ApiResponse<UserInvitation>> {
-  return await apiRequest('GET', `${getInvitationsBaseUrl()}/`)
-}
-
 // GET single invitation by token (using lookup_field = 'token')
 export async function getUserInvitationByToken(token: string): Promise<GetApiResponse<UserInvitation>> {
   return await apiRequest('GET', `${getInvitationsBaseUrl()}/${token}/`)
 }
 
 // ACCEPT invitation
-export async function acceptInvitation(token: string): Promise<ApiResponse<any>> {
-  return await apiRequest('POST', `${getInvitationsBaseUrl()}/accept/`, { token })
+export async function acceptInvitation(data: any): Promise<ApiResponse<any>> {
+  return await apiRequest('POST', `${getMemberInvitationsBaseUrl()}/`, data)
 }
 
 export async function checkUserExists(email: string): Promise<GetApiResponse<CheckUserExistsResponse>> {
   return await apiRequest('POST', getUserCheckUrl(), { email })
 }
 
-// CREATE new invitation
-// export async function createUserInvitation(data: Record<string, unknown>): Promise<ApiResponse<any>> {
-//   return await apiRequest('POST', `${getInvitationsBaseUrl()}/`, data)
-// }
+export async function createUserInvitation(
+  businessId: number,
+  data: UserInvitationCreation
+): Promise<GetApiResponse<any>> {
+  return apiRequest('POST', `${getInvitationsBaseUrl()}/`, data, true, {
+    'X-Business-ID': String(businessId)
+  })
+}
 
-export async function createUserInvitation(data: UserInvitationCreation): Promise<any> {
-  try {
-    const url = `subscriptions/${ENDPOINTS.invitations}/`
-    const response = await POST(url, data)
-
-    return response
-  } catch (error: any) {
-    if (error.response) {
-      throw error.response
-    } else {
-      throw new Error('Error in creating User Invitation')
+// GET all invitations
+export async function getUserInvitation(businessId: number | null): Promise<GetApiResponse<any>> {
+  return apiRequest(
+    'GET',
+    `${getInvitationsBaseUrl()}/`,
+    undefined, // ❌ no body in GET
+    true,
+    {
+      'X-Business-ID': String(businessId)
     }
-  }
+  )
 }
 
 // POST a new company-user invitation
@@ -86,4 +90,8 @@ export async function addCompanyUserInvitation(
   data: Record<string, unknown>
 ): Promise<ApiResponse<CompanyUserInvitation>> {
   return await apiRequest('POST', `${getCompanyUserInvitationsBaseUrl()}/`, data)
+}
+
+export async function getMembersInvitationList(): Promise<GetApiResponse<UserInvitation>> {
+  return await apiRequest('GET', `${getMemberInvitationsBaseUrl()}/`)
 }

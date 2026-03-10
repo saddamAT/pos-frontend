@@ -1,7 +1,7 @@
-import { GET, POST, DELETE, PUT, PATCH, GETNOAUTH, POSTNOAUTH, GETBYID } from './api'
+import { POST } from './api'
 
 import { ENDPOINTS } from './vars/vars'
-import axios from 'axios'
+
 import { CreationSubscription } from '@/types/apps/subscriptions'
 import { apiRequest } from '@/utils/apiRequest'
 
@@ -19,22 +19,37 @@ const getSubscriptionsBaseUrl = (): string => {
   return `${apiUrl}/subscriptions/${ENDPOINTS.subscriptions}`
 }
 
-export async function getUserSubscription(): Promise<GetApiResponse<any>> {
-  return await apiRequest('GET', `${getSubscriptionsBaseUrl()}/`)
+export async function getUserSubscription(businessId?: number): Promise<GetApiResponse<any>> {
+  return apiRequest(
+    'GET',
+    `${getSubscriptionsBaseUrl()}/`,
+    undefined,
+    true,
+    businessId ? { 'X-Business-ID': String(businessId) } : undefined
+  )
 }
 
-export async function updateUserSubscription(id: number, data: CreationSubscription): Promise<any> {
+export async function createUserSubscription(data: CreationSubscription): Promise<any> {
   try {
-    const url = `subscriptions/${ENDPOINTS.subscriptions}/${id}/`
-    const response = await PATCH(url, data)
+    const url = `subscriptions/${ENDPOINTS.subscriptions}/`
+    const response = await POST(url, data)
 
     return response
   } catch (error: any) {
     if (error.response) {
-      // You can customize the error handling based on your API's error structure
       throw error.response
     } else {
-      throw new Error('Error in updating User subscriptions')
+      throw new Error('Error in creating User subscription')
     }
   }
+}
+
+export async function updateUserSubscription(
+  subscriptionId: string,
+  businessId: number,
+  data: CreationSubscription
+): Promise<GetApiResponse<any>> {
+  return apiRequest('POST', `${getSubscriptionsBaseUrl()}/${subscriptionId}/change_plan/`, data, true, {
+    'X-Business-ID': String(businessId)
+  })
 }

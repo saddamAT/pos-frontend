@@ -29,6 +29,7 @@ import {
 } from '@tanstack/react-table'
 // Other
 import classnames from 'classnames'
+import { log } from 'console'
 import { useState, useMemo } from 'react'
 
 type InvitationsProps = {

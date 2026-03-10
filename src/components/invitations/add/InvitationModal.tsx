@@ -16,6 +16,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Grid from '@mui/material/Grid'
+import { useSession } from 'next-auth/react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -32,6 +33,10 @@ type InviteUserFormProps = {
 const InvitationModal = ({ open, setOpen, onConfirm, businesses, userType }: InviteUserFormProps) => {
   const [loading, setLoading] = useState<boolean>(false)
 
+  const { data: session } = useSession()
+
+  const selectedBusinessId = session?.user?.selectedBusiness?.id ?? null
+
   const {
     register,
     handleSubmit,
@@ -40,15 +45,19 @@ const InvitationModal = ({ open, setOpen, onConfirm, businesses, userType }: Inv
   } = useForm<UserInvitationCreation>()
 
   const onSubmit = async (data: UserInvitationCreation) => {
+    if (!selectedBusinessId) {
+      toast.error('Please select a business first')
+      return
+    }
+
     setLoading(true)
 
     const payload = {
-      email: data?.email,
-      user_type: data?.user_type,
-      business: data?.business
+      email: data.email,
+      user_type: data.user_type
     }
 
-    const response: any = await createUserInvitation(payload)
+    const response = await createUserInvitation(selectedBusinessId, payload)
 
     if (onConfirm) {
       onConfirm(true)
@@ -57,9 +66,10 @@ const InvitationModal = ({ open, setOpen, onConfirm, businesses, userType }: Inv
     if (response?.success) {
       setOpen(false)
       reset()
-      setLoading(false)
       toast.success('Invitation sent to user successfully')
     }
+
+    setLoading(false)
   }
 
   const handleReset = () => {
@@ -90,27 +100,7 @@ const InvitationModal = ({ open, setOpen, onConfirm, businesses, userType }: Inv
                   className={errors.email ? 'requiredField' : ''}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    select
-                    fullWidth
-                    label='Business *'
-                    {...register('business', { required: 'Business is required' })}
-                    error={!!errors.business}
-                    helperText={errors.business?.message}
-                    InputLabelProps={{
-                      className: errors.business ? 'requiredFieldError' : undefined
-                    }}
-                  >
-                    {businesses.map(b => (
-                      <MenuItem key={b.id} value={b.id}>
-                        {b.business_id}
-                      </MenuItem>
-                    ))}
-                  </CustomTextField>{' '}
-                </Grid>
-              </Grid>
+
               <Grid item xs={12}>
                 <CustomTextField
                   select

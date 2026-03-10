@@ -236,18 +236,3 @@ export async function updateUser(id: number, data: User): Promise<any> {
 export async function getUserBusinessesById(id: number): Promise<GetApiResponse<any>> {
   return await apiRequest('GET', `${getUserBusinessBaseUrl()}/${id}/`)
 }
-
-// export async function getUserBusinessesById(id: number): Promise<any> {
-//   try {
-//     const url = `whatseat/business/${ENDPOINTS.user}`
-//     const response = await GETBYID(url, id)
-
-//     return response
-//   } catch (error: any) {
-//     if (error.response) {
-//       throw error.response
-//     } else {
-//       throw new Error('Error in fetching User data')
-//     }
-//   }
-// }
