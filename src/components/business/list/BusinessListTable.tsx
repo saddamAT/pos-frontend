@@ -24,7 +24,7 @@ import {
 } from '@tanstack/react-table'
 
 import { rankItem, type RankingInfo } from '@tanstack/match-sorter-utils'
-import { deleteBusiness } from '@/api/business'
+import { deleteBusiness, getAllBusiness } from '@/api/business'
 import type { BusinessTypeForFile } from '@/api/interface/businessInterface'
 import { useAuthStore } from '@/store/authStore'
 import OpenDialogOnElementClick from '@/components/dialogs/OpenDialogOnElementClick'
@@ -36,6 +36,7 @@ import Loader from '@/components/loader/Loader'
 import { getUserBusinessesById } from '@/api/user'
 import AddEditBusiness from '@/components/business/add/AddEditBusiness'
 import { CurrencyDataType } from '@/api/interface/currencyInterface'
+import { BusinessOwner } from '@/api/interface/userInterface'
 
 declare module '@tanstack/table-core' {
   interface FilterFns {
@@ -60,22 +61,19 @@ const columnHelper = createColumnHelper<BusinessTypeWithAction>()
 
 const BusinessListTable = ({
   tableData = [],
-  currencies
+  currencies,
+  businessOwners
 }: {
   tableData?: BusinessTypeForFile[]
   currencies: CurrencyDataType[]
+  businessOwners: BusinessOwner[]
 }) => {
   const { data: session, update } = useSession()
 
   const selectedOutletId = session?.user?.selectedOutlet?.business
-
+  const userType = session?.user?.user_type
   const userSession = useSession()
-  // const userId = userSession?.data?.user?.id!
   const userId = userSession?.data?.user?.id ?? 0
-  // if (!userSession?.data?.user?.id) {
-  //   throw new Error('User ID missing')
-  // }
-  //  const userId = userSession.data.user.id // Now safe
 
   const [data, setData] = useState<BusinessTypeForFile[]>(tableData)
   const [rowSelection, setRowSelection] = useState({})
@@ -85,26 +83,23 @@ const BusinessListTable = ({
   const { businessData, businessAction } = useAuthStore()
 
   useEffect(() => {
-    if (userId) {
-      fetchAllBusiness()
-    }
-  }, [userId]) // Watch userId for changes
+    fetchAllBusiness()
+  }, [])
 
-  // Set the data when the businessData or tableData changes
   useEffect(() => {
     if (businessData && businessData.length > 0) {
       setData(businessData)
     } else if (tableData && tableData.length > 0) {
       setData(tableData)
-      businessAction(tableData) // Update store with prop data
+      businessAction(tableData)
     }
   }, [tableData, businessData, businessAction])
 
   const fetchAllBusiness = async () => {
     try {
       setLoading(true)
-      const response = await getUserBusinessesById(userId)
-      const updatedData = response?.data ?? []
+      const response = await getAllBusiness()
+      const updatedData = response?.data?.results ?? []
       setData(updatedData)
       businessAction(updatedData)
     } catch (error) {
@@ -124,15 +119,11 @@ const BusinessListTable = ({
     try {
       await deleteBusiness(id.toString())
       toast.success('Business deleted successfully')
-
       const updatedData = data.filter(business => business.id !== id)
       setData(updatedData)
-
       businessAction(updatedData)
-
       const response = await getUserBusinessesById(userId)
       const businesses = response?.data ?? []
-
       await update({ userBusinesses: businesses })
     } catch (error: any) {
       toast.error(error?.data?.detail || 'Error in deleting business')
@@ -220,43 +211,40 @@ const BusinessListTable = ({
                   }}
                 />
               </div>
-              <div>
-                <OpenDialogOnElementClick
-                  element={Button}
-                  elementProps={{ children: 'Edit', color: 'primary', variant: 'contained' }}
-                  dialog={AddEditBusiness}
-                  onTypeAdded={handleTypeAdded}
-                  dialogProps={{
-                    mode: 'edit',
-                    data: businessData.find((item: any) => item.id === row?.original?.id)
-                  }}
-                />
-              </div>
-              <div>
-                {/* <Tooltip
-                  title={
-                    rowIsActive
-                      ? 'You cant delete the business currently in use. Please switch to another branch first'
-                      : ''
-                  }
-                > */}
-                <OpenDialogOnElementClick
-                  element={Button}
-                  elementProps={{
-                    children: <i className='tabler-trash text-xl' />,
-                    color: rowIsActive ? 'primary' : 'error',
-                    disabled: rowIsActive,
-                    title: rowIsActive
-                      ? "You can't delete the business currently in use. Please switch to another branch first."
-                      : 'Delete Business',
-                    sx: { opacity: rowIsActive ? 0.5 : 1 }
-                  }}
-                  dialog={ConfirmationDialog}
-                  onConfirm={() => handleDeleteConfirmed(row.original.id)}
-                  dialogProps={{ type: 'delete' }}
-                />
-                {/* </Tooltip> */}
-              </div>
+              {userType === 'superadmin' && (
+                <>
+                  <div>
+                    <OpenDialogOnElementClick
+                      element={Button}
+                      elementProps={{ children: 'Edit', color: 'primary', variant: 'contained' }}
+                      dialog={AddEditBusiness}
+                      onTypeAdded={handleTypeAdded}
+                      dialogProps={{
+                        mode: 'edit',
+                        data: businessData.find((item: any) => item.id === row?.original?.id),
+                        businessOwners: businessOwners
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <OpenDialogOnElementClick
+                      element={Button}
+                      elementProps={{
+                        children: <i className='tabler-trash text-xl' />,
+                        color: rowIsActive ? 'primary' : 'error',
+                        disabled: rowIsActive,
+                        title: rowIsActive
+                          ? "You can't delete the business currently in use. Please switch to another branch first."
+                          : 'Delete Business',
+                        sx: { opacity: rowIsActive ? 0.5 : 1 }
+                      }}
+                      dialog={ConfirmationDialog}
+                      onConfirm={() => handleDeleteConfirmed(row.original.id)}
+                      dialogProps={{ type: 'delete' }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )
         }
@@ -293,13 +281,15 @@ const BusinessListTable = ({
             <MenuItem value='25'>25</MenuItem>
             <MenuItem value='50'>50</MenuItem>
           </CustomTextField>
-          <OpenDialogOnElementClick
-            element={Button}
-            elementProps={{ children: 'Add Business', variant: 'contained' }}
-            dialog={AddEditBusiness}
-            onTypeAdded={handleTypeAdded}
-            dialogProps={{ mode: 'add', currencies: currencies }}
-          />
+          {userType === 'superadmin' && (
+            <OpenDialogOnElementClick
+              element={Button}
+              elementProps={{ children: 'Add Business', variant: 'contained' }}
+              dialog={AddEditBusiness}
+              onTypeAdded={handleTypeAdded}
+              dialogProps={{ mode: 'add', currencies: currencies, businessOwners: businessOwners }}
+            />
+          )}
         </div>
         <div className='overflow-x-auto'>
           <table className={tableStyles.table}>

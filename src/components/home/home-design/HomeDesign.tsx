@@ -59,6 +59,7 @@ const HomeDesign = () => {
   })
 
   const { data } = useSession()
+  console.log(data, 'session ---15')
 
   const branchName = data?.user?.selectedOutlet?.name
 

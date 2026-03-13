@@ -196,3 +196,21 @@ export interface AcceptInvitationPayload {
   invited_by: number
   role: number | null
 }
+
+export interface BusinessOwner {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  user_type: string
+  city: string
+  country: string
+  status: string
+  address: string
+  name: string
+  mobile: string
+  createdAt: string
+  postalCode: string
+  deleted: boolean
+  isLoggedIn: boolean
+}

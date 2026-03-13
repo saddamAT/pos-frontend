@@ -52,5 +52,6 @@ export const ENDPOINTS = {
   currencies: 'currencies',
   subscriptions: 'subscriptions',
   invitations: 'invitations',
-  subscriptionHistory: 'subscription-history'
+  subscriptionHistory: 'subscription-history',
+  businessOwners: 'business-owners'
 }

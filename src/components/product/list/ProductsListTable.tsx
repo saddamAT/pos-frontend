@@ -160,6 +160,7 @@ const ProductsListTable = ({ tableData, businesses }: { tableData?: MenuesType[]
     const fetchBusinessByID = async () => {
       try {
         const response = await getBusinessById(Number(selectedBusiness))
+        debugger
         setBusinessByIdData(response?.data)
       } catch (err: any) {
         toast.error(err.message || 'Failed to fetch businesses')

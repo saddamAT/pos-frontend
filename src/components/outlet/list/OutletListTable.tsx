@@ -108,18 +108,11 @@ const OutletListTable = ({
     }
   }, [tableData, resturantData])
 
-  // Fetch data on component mount if no data available
   useEffect(() => {
     if (!resturantData || resturantData.length === 0) {
       fetchResturants()
     }
   }, [])
-
-  // if (!userSession?.data?.user?.id) {
-  //   throw new Error('User ID missing')
-  // }
-  // const userId = userSession.data.user.id // Now safe
-  // console.log(isDelete,'hello');
 
   const fetchResturants = async () => {
     try {
@@ -137,7 +130,6 @@ const OutletListTable = ({
   }
 
   const handleTypeAdded = async () => {
-    // Fetch fresh data and update both local state and store
     await fetchResturants()
   }
 
@@ -146,14 +138,11 @@ const OutletListTable = ({
       await deleteRestaurant(String(id))
       toast.success('Outlet deleted successfully')
 
-      // Update local state immediately
       const updatedData = data.filter(outlet => outlet.id !== id)
       setData(updatedData)
 
-      // Update the store with the filtered data immediately
       resturantAction(updatedData)
 
-      // Update session
       const response = await getUserBusinessesById(userId)
       await update({ userBusinesses: response?.data ?? [] })
     } catch (err: any) {
@@ -269,36 +258,41 @@ const OutletListTable = ({
                   }}
                 />
               </div>
-              <div>
-                <OpenDialogOnElementClick
-                  element={Button}
-                  elementProps={buttonProps('Edit', 'primary', 'contained')}
-                  dialog={AddEditOutlet}
-                  onTypeAdded={handleTypeAdded}
-                  dialogProps={{
-                    mode: 'edit',
-                    data: data.find((item: any) => item.id === row?.original?.id),
-                    userBusiness: userBusiness
-                  }}
-                />
-              </div>
-              <div>
-                <OpenDialogOnElementClick
-                  element={Button}
-                  elementProps={{
-                    children: <i className='tabler-trash text-xl' />,
-                    color: rowIsActive ? 'primary' : 'error',
-                    disabled: rowIsActive,
-                    title: rowIsActive
-                      ? "You can't delete the outlet currently in use. Please switch to another branch first."
-                      : 'Delete outlet',
-                    sx: { opacity: rowIsActive ? 0.5 : 1 }
-                  }}
-                  dialog={ConfirmationDialog}
-                  onConfirm={() => row.original.id && handleDeleteConfirmed(row.original.id)}
-                  dialogProps={{ type: 'delete' }}
-                />
-              </div>
+              {session?.user?.user_type === 'superadmin' && (
+                <>
+                  {' '}
+                  <div>
+                    <OpenDialogOnElementClick
+                      element={Button}
+                      elementProps={buttonProps('Edit', 'primary', 'contained')}
+                      dialog={AddEditOutlet}
+                      onTypeAdded={handleTypeAdded}
+                      dialogProps={{
+                        mode: 'edit',
+                        data: data.find((item: any) => item.id === row?.original?.id),
+                        userBusiness: userBusiness
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <OpenDialogOnElementClick
+                      element={Button}
+                      elementProps={{
+                        children: <i className='tabler-trash text-xl' />,
+                        color: rowIsActive ? 'primary' : 'error',
+                        disabled: rowIsActive,
+                        title: rowIsActive
+                          ? "You can't delete the outlet currently in use. Please switch to another branch first."
+                          : 'Delete outlet',
+                        sx: { opacity: rowIsActive ? 0.5 : 1 }
+                      }}
+                      dialog={ConfirmationDialog}
+                      onConfirm={() => row.original.id && handleDeleteConfirmed(row.original.id)}
+                      dialogProps={{ type: 'delete' }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )
         },

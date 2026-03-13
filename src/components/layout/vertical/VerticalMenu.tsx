@@ -97,11 +97,17 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
             </MenuItem>
           )}
 
-          {data?.user?.user_type === 'superadmin' && (
+          {['superadmin', 'businessowner'].includes(data?.user?.user_type ?? '') && (
             <MenuItem href={`/${locale}/business`} icon={<i className='tabler-chart-bar' />}>
               {dictionary['navigation'].business}
             </MenuItem>
           )}
+
+          {/* {data?.user?.user_type === 'superadmin' && (
+            <MenuItem href={`/${locale}/business`} icon={<i className='tabler-chart-bar' />}>
+              {dictionary['navigation'].business}
+            </MenuItem>
+          )} */}
           {data?.user?.user_type?.toLowerCase() !== 'cashier' && data?.user?.user_type?.toLowerCase() !== 'manager' && (
             <MenuItem href={`/${locale}/outlets`} icon={<i className='tabler-box text-[26px]' />}>
               {dictionary['navigation'].outlet}

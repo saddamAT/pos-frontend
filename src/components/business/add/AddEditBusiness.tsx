@@ -28,6 +28,7 @@ import { BusinessDataTypeForAddBusiness, BusinessEditPayload } from '@/api/inter
 import { useSession } from 'next-auth/react'
 import { getUserBusinessesById } from '@/api/user'
 import { ListItemText } from '@mui/material'
+import { BusinessOwner } from '@/api/interface/userInterface'
 
 type AddEditBusinessProps = {
   open: boolean
@@ -35,10 +36,19 @@ type AddEditBusinessProps = {
   mode: 'add' | 'edit' | 'view'
   data?: BusinessEditPayload
   currencies: CurrencyDataType[]
+  businessOwners: BusinessOwner[]
   onTypeAdded?: () => void
 }
 
-const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }: AddEditBusinessProps) => {
+const AddEditBusiness = ({
+  open,
+  setOpen,
+  mode,
+  data,
+  onTypeAdded,
+  currencies,
+  businessOwners
+}: AddEditBusinessProps) => {
   const { data: session, update } = useSession()
   const [loading, setLoading] = useState(false)
   const [openConfirmation, setOpenConfirmation] = useState(false)
@@ -46,12 +56,7 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
   const [created, setCreated] = useState(false)
   const [updated, setUpdated] = useState(false)
   const userSession = useSession()
-  // const userId = userSession?.data?.user?.id!
   const userId = userSession?.data?.user?.id ?? 0
-  //   if (!userSession?.data?.user?.id) {
-  //     throw new Error('User ID missing')
-  //   }
-  //   const userId = userSession.data.user.id // Now safe
 
   const {
     register,
@@ -70,19 +75,21 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
 
   const handleConfirm = async () => {
     if (!payloadData) return
+
     try {
       setLoading(true)
 
       const submittedpayload = {
-        business_address: payloadData?.business_address,
-        business_contact: payloadData?.business_contact,
-        business_desc: payloadData?.business_desc,
-        business_id: payloadData?.business_id,
-        contact_number: payloadData?.contact_number,
-        business_initial: payloadData?.business_initial,
-        id: payloadData?.id,
-        name: payloadData?.name,
-        business_type: payloadData?.business_type
+        business_address: payloadData.business_address,
+        business_contact: payloadData.business_contact,
+        business_desc: payloadData.business_desc,
+        business_id: payloadData.business_id,
+        contact_number: payloadData.contact_number,
+        business_initial: payloadData.business_initial,
+        id: payloadData.id,
+        name: payloadData.name,
+        user: payloadData.user,
+        business_type: payloadData.business_type
       }
 
       await updateBusiness(payloadData.id, submittedpayload)
@@ -105,12 +112,27 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
 
   const onSubmit = async (data: BusinessEditPayload | BusinessDataTypeForAddBusiness, e: any) => {
     e.preventDefault()
+
     if (mode === 'edit') {
-      setPayloadData({ ...data, id: data?.id ?? 0 })
+      const userIdValue = typeof data.user === 'object' && data.user !== null ? data.user.id : data.user
+
+      setPayloadData({
+        id: data?.id ?? 0,
+        business_id: data?.business_id,
+        name: data?.name,
+        business_address: data?.business_address,
+        business_desc: data?.business_desc,
+        contact_number: data?.contact_number,
+        business_initial: data?.business_initial,
+        business_type: data?.business_type,
+        user: userIdValue
+      })
+
       setOpenConfirmation(true)
     } else {
       try {
         setLoading(true)
+
         const formData: any = new FormData()
         formData.append('business_id', data.business_id)
         formData.append('name', data.name)
@@ -120,12 +142,7 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
         formData.append('business_initial', data.business_initial)
         formData.append('business_type', data.business_type)
         formData.append('currency', data.currency)
-
-        if (session && session?.user?.user_type === 'admin') {
-          formData.append('user', data?.user)
-        } else {
-          formData.append('user', session?.user?.id)
-        }
+        formData.append('user', data.user)
 
         if (data.business_doc && data.business_doc instanceof FileList && data.business_doc.length > 0) {
           formData.append('business_doc', data.business_doc[0])
@@ -344,6 +361,46 @@ const AddEditBusiness = ({ open, setOpen, mode, data, onTypeAdded, currencies }:
                 ))}
               </CustomTextField>
             </Grid>
+
+            {(mode === 'add' || mode === 'edit') && (
+              <Grid item xs={12} sm={6}>
+                <CustomTextField
+                  select
+                  fullWidth
+                  label='Business Owner *'
+                  defaultValue={data?.user?.name || ''}
+                  {...register('user', { required: 'Business owner is required' })}
+                  error={!!errors.user}
+                  helperText={errors.user?.message}
+                >
+                  {businessOwners?.length > 0 ? (
+                    businessOwners.map(item => (
+                      <MenuItem key={item.id} value={item.id}>
+                        {item.first_name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <ListItemText primary='No businessowner found' />
+                    </MenuItem>
+                  )}
+                </CustomTextField>
+              </Grid>
+            )}
+
+            {mode === 'view' && (
+              <Grid item xs={12} sm={6}>
+                <CustomTextField
+                  fullWidth
+                  label='Business Owner *'
+                  defaultValue={data?.user?.name || ''}
+                  // disabled={mode === 'edit'}
+                  inputProps={{
+                    readOnly: mode === 'view'
+                  }}
+                />
+              </Grid>
+            )}
 
             {mode === 'add' && (
               <>

@@ -27,7 +27,10 @@ const BusinessPage = async ({ params }: Props) => {
 
   // Redirect if user is neither admin nor superadmin
   const userType = session.user?.user_type
-  if (userType !== 'superadmin') {
+  // if (userType !== 'superadmin' && userType !== 'businessowner') {
+  //   redirect(`/${params.lang}/home`)
+  // }
+  if (!['superadmin', 'businessowner'].includes(userType)) {
     redirect(`/${params.lang}/home`)
   }
   return <BusinessList loggedInUserId={loggedInUserId} />

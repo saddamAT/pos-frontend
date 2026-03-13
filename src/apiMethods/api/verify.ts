@@ -1,6 +1,4 @@
-// pages/api/verify.ts
 import type { NextApiRequest, NextApiResponse } from 'next'
-// import cookie from 'cookie'
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
@@ -23,18 +21,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       }
 
       const data = await apiRes.json()
-
-      // Set cookie with the token
-      // res.setHeader(
-      //   'Set-Cookie',
-      //   cookie.serialize('auth_token', data.token, {
-      //     httpOnly: true,
-      //     secure: process.env.NODE_ENV !== 'development', // Secure in production
-      //     path: '/',
-      //     maxAge: 60 * 60 * 24 * 7, // 1 week
-      //     sameSite: 'strict'
-      //   })
-      // )
 
       // Set user data in localStorage
       res.status(200).json({

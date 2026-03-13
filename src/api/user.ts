@@ -32,6 +32,13 @@ const getUserTypeBaseUrl = (): string => {
   return `${apiUrl}/account/${ENDPOINTS.userType}`
 }
 
+const getBusinessOwnerBaseUrl = (): string => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL
+
+  if (!apiUrl) throw new Error('Missing API_URL environment variable')
+  return `${apiUrl}/account/${ENDPOINTS.businessOwners}`
+}
+
 import type {
   forgotPasswordUserType,
   LoginUser,
@@ -235,4 +242,12 @@ export async function updateUser(id: number, data: User): Promise<any> {
 
 export async function getUserBusinessesById(id: number): Promise<GetApiResponse<any>> {
   return await apiRequest('GET', `${getUserBusinessBaseUrl()}/${id}/`)
+}
+
+export async function getUserBusinesses(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getUserBusinessBaseUrl()}/`)
+}
+
+export async function getAllBusinessOwners(): Promise<GetApiResponse<any>> {
+  return await apiRequest('GET', `${getBusinessOwnerBaseUrl()}/`)
 }

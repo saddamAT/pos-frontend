@@ -144,7 +144,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!user?.id || !user?.email) return null
 
+        // yeh nechy wala chek laga k subha sub testing krni hai aa k yeh necy wala flow superadmin k liye hai
+        // fetch(`${API_URL}/whatseat/userbusinesses`) need to implement this api to get the user businesses and outlets and set the default business and outlet in the session for superadmin
         // 2) Fetch user businesses
+
         let userBusinesses: UserBusinessesType[] = []
         try {
           const ubRes = await fetch(`${API_URL}/whatseat/business/user/${user.id}/`, {

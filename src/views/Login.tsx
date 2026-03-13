@@ -1,13 +1,10 @@
 'use client'
 
-// React
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
-// Next / Forms
 import { useParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 
-// MUI
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
@@ -17,28 +14,23 @@ import Checkbox from '@mui/material/Checkbox'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
 
-// Utils / Types
 import { getLocalizedUrl } from '@/utils/i18n'
 import type { Locale } from '@configs/i18n'
 import classnames from 'classnames'
 import toast from 'react-hot-toast'
 import type { SystemMode } from '@core/types'
 
-// Components
 import Link from '@components/Link'
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
 import Loader from '@/components/loader/Loader'
 
-// Config & Hooks
 import themeConfig from '@configs/themeConfig'
 import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 
-// Auth
 import { signIn, useSession } from 'next-auth/react'
 
-// Images
 const darkImg = '/images/pages/auth-mask-dark.png'
 const lightImg = '/images/pages/auth-mask-light.png'
 const darkIllustration = '/images/illustrations/auth/v2-login-dark.png'
@@ -66,18 +58,12 @@ const MaskImg = styled('img')({
   zIndex: -1
 })
 
-// Domain types
 import type { LoginUser } from '@/api/interface/userInterface'
-// import PostLoginModal, { UserBusiness } from '@/components/business/modal/PostLoginModal'
 
 const Login = ({ mode }: { mode: SystemMode }) => {
   const [loading, setLoading] = useState(false)
   const [isRememberMeChecked, setIsRememberMeChecked] = useState(false)
   const [isPasswordShown, setIsPasswordShown] = useState(false)
-  // const [showPostLogin, setShowPostLogin] = useState(false)
-
-  // const { data: session } = useSession()
-  // console.log(session, 'session---876342')
 
   const router = useRouter()
   const { lang: locale } = useParams() as { lang: Locale }
@@ -108,6 +94,8 @@ const Login = ({ mode }: { mode: SystemMode }) => {
         redirect: false
       })
       setLoading(false)
+
+      console.log(res, 'res--15')
 
       if (res && res.ok && res.error === null) {
         toast.success('Logged in successfully.')
